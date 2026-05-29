@@ -186,7 +186,9 @@ struct NapTimerView: View {
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
             if remainingSeconds > 0 {
                 remainingSeconds -= 1
-            } else onTimerEnd()
+            } else {
+                onTimerEnd()
+            }
         }
     }
 

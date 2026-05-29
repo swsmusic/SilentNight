@@ -6,19 +6,17 @@ SilentNight is a SwiftUI iOS app that plays brown noise (and other noise colors)
 ## Project Structure
 ```
 SilentNight/
-├── SilentNight/
-│   ├── Sources/
-│   │   ├── SilentNightApp.swift    # App entry point
-│   │   ├── ContentView.swift       # Main tab container
-│   │   ├── AudioEngine.swift       # Brown/pink/white/grey noise generator
-│   │   ├── MicMonitor.swift        # Microphone snore detection
-│   │   ├── NowPlayingView.swift    # Main playback screen
-│   │   ├── NapTimerView.swift      # Nap timer
-│   │   ├── WaveformView.swift      # Animated waveform visualization
-│   │   └── SettingsView.swift      # Settings screen
-│   ├── Resources/
-│   │   └── Info.plist              # App config + mic permission
-│   └── Tests/                      # Unit tests (add as needed)
+├── SilentNight/                     # Xcode app target sources (group path = SilentNight)
+│   ├── SilentNightApp.swift         # App entry point
+│   ├── ContentView.swift            # Main tab container
+│   ├── AudioEngine.swift            # Brown/pink/white/grey noise generator
+│   ├── MicMonitor.swift             # Microphone snore detection
+│   ├── NowPlayingView.swift         # Main playback screen
+│   ├── NapTimerView.swift           # Nap timer
+│   ├── WaveformView.swift           # Animated waveform visualization
+│   ├── SettingsView.swift           # Settings screen
+│   └── Info.plist                   # App config + mic permission (INFOPLIST_FILE)
+├── Package.swift                    # SwiftPM manifest for headless logic build/tests
 └── AGENTS.md                        # This file
 ```
 

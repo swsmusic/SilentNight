@@ -79,9 +79,8 @@ final class AudioEngine: ObservableObject {
 
     /// Increase volume to cover detected snoring (called by MicMonitor)
     func boostForSnoring(level: Double) {
-        guard isAutoMode else { let newVolume = min(1.0, volume + Float(level * 0.05))
-            volume = Double(newVolume)
-        }
+        guard isAutoMode else { return }
+        volume = min(1.0, volume + level * 0.05)
     }
 
     // MARK: - Noise Pipeline

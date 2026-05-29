@@ -19,7 +19,7 @@ struct WaveformView: View {
                 let relX = x / width
 
                 // Create organic waveform based on noise type
-                let amplitude = noiseAmplitude(for: relX) * 40
+                let amplitude = noiseAmplitude(relX) * 40
                 let frequency1 = noiseFrequency1
                 let frequency2 = noiseFrequency2
 

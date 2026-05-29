@@ -1,36 +1,37 @@
 // !$*UTF8*$!
 {
 	archiveVersion = 1;
-	classes = {};
+	classes = {
+	};
 	objectVersion = 56;
 	objects = {
 
 /* Begin PBXBuildFile section */
-		FD9F230EA84143FBA0A7BE5B /* SilentNightApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B593E01258B8454EA955E4B5 /* SilentNightApp.swift */; };
-		788D7ED7E49B4C4F94CB7C88 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94852D4DE717445890FE61D6 /* ContentView.swift */; };
-		616EA531B9D6486AA7D4119A /* AudioEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE7F6ED2376345D4A45B29EE /* AudioEngine.swift */; };
-		CF934A2DDF3648C6ABA7F197 /* MicMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 722C26FE9ADE42E48D2F3EAF /* MicMonitor.swift */; };
-		723CE1D069B54B6EAC9948BE /* NowPlayingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C599E8E4082945D9951BCB37 /* NowPlayingView.swift */; };
-		837045D926B24CB3BAD2D781 /* WaveformView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5DDE4DAA5DE454E882A0919 /* WaveformView.swift */; };
-		94D16A5C340F42AD890AA231 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C303FECC69AA4C6DAEC66DDF /* SettingsView.swift */; };
-		C50D062BE80C49F2B9CFBAE5 /* NapTimerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB512EB7F654451180500B37 /* NapTimerView.swift */; };
+		1A0000000000000000000018 /* SilentNightApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A0000000000000000000017 /* SilentNightApp.swift */; };
+		1A0000000000000000000020 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A0000000000000000000019 /* ContentView.swift */; };
+		1A0000000000000000000022 /* AudioEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A0000000000000000000021 /* AudioEngine.swift */; };
+		1A0000000000000000000024 /* MicMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A0000000000000000000023 /* MicMonitor.swift */; };
+		1A0000000000000000000026 /* NowPlayingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A0000000000000000000025 /* NowPlayingView.swift */; };
+		1A0000000000000000000028 /* WaveformView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A0000000000000000000027 /* WaveformView.swift */; };
+		1A0000000000000000000030 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A0000000000000000000029 /* SettingsView.swift */; };
+		1A0000000000000000000032 /* NapTimerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A0000000000000000000031 /* NapTimerView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		B593E01258B8454EA955E4B5 /* SilentNightApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SilentNightApp.swift; path = SilentNightApp.swift; sourceTree = "<group>"; };
-		94852D4DE717445890FE61D6 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ContentView.swift; path = ContentView.swift; sourceTree = "<group>"; };
-		DE7F6ED2376345D4A45B29EE /* AudioEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AudioEngine.swift; path = AudioEngine.swift; sourceTree = "<group>"; };
-		722C26FE9ADE42E48D2F3EAF /* MicMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = MicMonitor.swift; path = MicMonitor.swift; sourceTree = "<group>"; };
-		C599E8E4082945D9951BCB37 /* NowPlayingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NowPlayingView.swift; path = NowPlayingView.swift; sourceTree = "<group>"; };
-		A5DDE4DAA5DE454E882A0919 /* WaveformView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = WaveformView.swift; path = WaveformView.swift; sourceTree = "<group>"; };
-		C303FECC69AA4C6DAEC66DDF /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SettingsView.swift; path = SettingsView.swift; sourceTree = "<group>"; };
-		AB512EB7F654451180500B37 /* NapTimerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NapTimerView.swift; path = NapTimerView.swift; sourceTree = "<group>"; };
-		4E7D68D1CD8243AF979F0B2A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = Info.plist; path = Info.plist; sourceTree = "<group>"; };
-		FA3C42C4543847359F965CB4 /* SilentNight.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SilentNight.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		1A0000000000000000000017 /* SilentNightApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SilentNightApp.swift; sourceTree = "<group>"; };
+		1A0000000000000000000019 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		1A0000000000000000000021 /* AudioEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioEngine.swift; sourceTree = "<group>"; };
+		1A0000000000000000000023 /* MicMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MicMonitor.swift; sourceTree = "<group>"; };
+		1A0000000000000000000025 /* NowPlayingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlayingView.swift; sourceTree = "<group>"; };
+		1A0000000000000000000027 /* WaveformView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaveformView.swift; sourceTree = "<group>"; };
+		1A0000000000000000000029 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		1A0000000000000000000031 /* NapTimerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NapTimerView.swift; sourceTree = "<group>"; };
+		1A0000000000000000000016 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		1A0000000000000000000006 /* SilentNight.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SilentNight.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		2965BD8E66AD446ABA0E5A1A /* Frameworks */ = {
+		1A0000000000000000000008 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -40,48 +41,48 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		FA9DF4ACDDFE44628113DF27 = {
+		1A0000000000000000000002 = {
 			isa = PBXGroup;
 			children = (
-				D2879063A5AC46D68CA65582 /* SilentNight */,
-				EC9ED6C53FFC48289224F6D6 /* Products */,
+				1A0000000000000000000004 /* SilentNight */,
+				1A0000000000000000000003 /* Products */,
 			);
 			sourceTree = "<group>";
 		};
-		EC9ED6C53FFC48289224F6D6 /* Products */ = {
+		1A0000000000000000000003 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				FA3C42C4543847359F965CB4 /* SilentNight.app */,
+				1A0000000000000000000006 /* SilentNight.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		D2879063A5AC46D68CA65582 /* SilentNight */ = {
+		1A0000000000000000000004 /* SilentNight */ = {
 			isa = PBXGroup;
 			children = (
-				B593E01258B8454EA955E4B5 /* SilentNightApp.swift */,
-				94852D4DE717445890FE61D6 /* ContentView.swift */,
-				DE7F6ED2376345D4A45B29EE /* AudioEngine.swift */,
-				722C26FE9ADE42E48D2F3EAF /* MicMonitor.swift */,
-				C599E8E4082945D9951BCB37 /* NowPlayingView.swift */,
-				A5DDE4DAA5DE454E882A0919 /* WaveformView.swift */,
-				C303FECC69AA4C6DAEC66DDF /* SettingsView.swift */,
-				AB512EB7F654451180500B37 /* NapTimerView.swift */,
-				4E7D68D1CD8243AF979F0B2A /* Info.plist */,
+				1A0000000000000000000017 /* SilentNightApp.swift */,
+				1A0000000000000000000019 /* ContentView.swift */,
+				1A0000000000000000000021 /* AudioEngine.swift */,
+				1A0000000000000000000023 /* MicMonitor.swift */,
+				1A0000000000000000000025 /* NowPlayingView.swift */,
+				1A0000000000000000000027 /* WaveformView.swift */,
+				1A0000000000000000000029 /* SettingsView.swift */,
+				1A0000000000000000000031 /* NapTimerView.swift */,
+				1A0000000000000000000016 /* Info.plist */,
 			);
-			name = SilentNight;
+			path = SilentNight;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		BEB6245520824AEFBD962A29 /* SilentNight */ = {
+		1A0000000000000000000005 /* SilentNight */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 70EAC12A3ACD4C17933965CF /* Build configuration list for PBXNativeTarget "SilentNight" */;
+			buildConfigurationList = 1A0000000000000000000011 /* Build configuration list for PBXNativeTarget "SilentNight" */;
 			buildPhases = (
-				564E3C8DBD7647B0918C2355 /* Sources */,
-				2965BD8E66AD446ABA0E5A1A /* Frameworks */,
-				0E4C9F4BA7AE4517959C3611 /* Resources */,
+				1A0000000000000000000007 /* Sources */,
+				1A0000000000000000000008 /* Frameworks */,
+				1A0000000000000000000009 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -89,44 +90,44 @@
 			);
 			name = SilentNight;
 			productName = SilentNight;
-			productReference = FA3C42C4543847359F965CB4 /* SilentNight.app */;
+			productReference = 1A0000000000000000000006 /* SilentNight.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		B03AA478147B4DFB9ED91C79 /* Project object */ = {
+		1A0000000000000000000001 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1500;
 				LastUpgradeCheck = 1500;
 				TargetAttributes = {
-					BEB6245520824AEFBD962A29 = {
+					1A0000000000000000000005 = {
 						CreatedOnToolsVersion = 15.0;
 					};
 				};
 			};
-			buildConfigurationList = 72B9B92291B9493998C245D0 /* Build configuration list for PBXProject "SilentNight" */;
-			compatibilityVersion = "Xcode 15.0";
+			buildConfigurationList = 1A0000000000000000000010 /* Build configuration list for PBXProject "SilentNight" */;
+			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
 				Base,
 			);
-			mainGroup = FA9DF4ACDDFE44628113DF27;
-			productRefGroup = EC9ED6C53FFC48289224F6D6 /* Products */;
+			mainGroup = 1A0000000000000000000002;
+			productRefGroup = 1A0000000000000000000003 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				BEB6245520824AEFBD962A29 /* SilentNight */,
+				1A0000000000000000000005 /* SilentNight */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		0E4C9F4BA7AE4517959C3611 /* Resources */ = {
+		1A0000000000000000000009 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -136,161 +137,71 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		564E3C8DBD7647B0918C2355 /* Sources */ = {
+		1A0000000000000000000007 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				FD9F230EA84143FBA0A7BE5B /* SilentNightApp.swift in Sources */,
-				788D7ED7E49B4C4F94CB7C88 /* ContentView.swift in Sources */,
-				616EA531B9D6486AA7D4119A /* AudioEngine.swift in Sources */,
-				CF934A2DDF3648C6ABA7F197 /* MicMonitor.swift in Sources */,
-				723CE1D069B54B6EAC9948BE /* NowPlayingView.swift in Sources */,
-				837045D926B24CB3BAD2D781 /* WaveformView.swift in Sources */,
-				94D16A5C340F42AD890AA231 /* SettingsView.swift in Sources */,
-				C50D062BE80C49F2B9CFBAE5 /* NapTimerView.swift in Sources */,
+				1A0000000000000000000018 /* SilentNightApp.swift in Sources */,
+				1A0000000000000000000020 /* ContentView.swift in Sources */,
+				1A0000000000000000000022 /* AudioEngine.swift in Sources */,
+				1A0000000000000000000024 /* MicMonitor.swift in Sources */,
+				1A0000000000000000000026 /* NowPlayingView.swift in Sources */,
+				1A0000000000000000000028 /* WaveformView.swift in Sources */,
+				1A0000000000000000000030 /* SettingsView.swift in Sources */,
+				1A0000000000000000000032 /* NapTimerView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
-
-/* Project-level configurations */
-
-		FBD109A6087A40E9941F8C01 /* Debug */ = {
+		1A0000000000000000000012 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
-				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
-				CLANG_ENABLE_OBJC_WEAK = YES;
-				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
-				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_COMMA = YES;
-				CLANG_WARN_CONSTANT_CONVERSION = YES;
-				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
-				CLANG_WARN_EMPTY_BODY = YES;
-				CLANG_WARN_ENUM_CONVERSION = YES;
-				CLANG_WARN_INFINITE_RECURSION = YES;
-				CLANG_WARN_INT_CONVERSION = YES;
-				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
-				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
-				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK = YES;
-				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
-				CLANG_WARN_STRICT_PROTOTYPES = YES;
-				CLANG_WARN_SUSPICIOUS_MOVE = YES;
-				CLANG_WARN_UNGUARDED_AVAILABLE = YES;
-				CLANG_WARN_UNREACHABLE_CODE = YES;
-				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CODE_SIGN_STYLE = Automatic;
-				COPY_PHASE_STRIP = NO;
-				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_TESTABILITY = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu17;
-				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
-					"$(inherited)",
-				);
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNDECLARED_SELECTOR = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				GCC_WARN_UNUSED_FUNCTION = YES;
-				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MTL_ENABLE_DEBUG_INFO = YES;
-				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_TESTABILITY = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				ONLY_ACTIVE_ARCH = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 			};
 			name = Debug;
 		};
-		D4D04BA40486471DA1947DAA /* Release */ = {
+		1A0000000000000000000013 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
-				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
-				CLANG_ENABLE_OBJC_WEAK = YES;
-				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
-				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_COMMA = YES;
-				CLANG_WARN_CONSTANT_CONVERSION = YES;
-				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
-				CLANG_WARN_EMPTY_BODY = YES;
-				CLANG_WARN_ENUM_CONVERSION = YES;
-				CLANG_WARN_INFINITE_RECURSION = YES;
-				CLANG_WARN_INT_CONVERSION = YES;
-				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
-				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
-				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK = YES;
-				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
-				CLANG_WARN_STRICT_PROTOTYPES = YES;
-				CLANG_WARN_SUSPICIOUS_MOVE = YES;
-				CLANG_WARN_UNGUARDED_AVAILABLE = YES;
-				CLANG_WARN_UNREACHABLE_CODE = YES;
-				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CODE_SIGN_STYLE = Automatic;
-				COPY_PHASE_STRIP = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				SDKROOT = iphoneos;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
-				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu17;
-				GCC_NO_COMMON_BLOCKS = YES;
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNDECLARED_SELECTOR = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				GCC_WARN_UNUSED_FUNCTION = YES;
-				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MTL_ENABLE_DEBUG_INFO = NO;
-				SDKROOT = iphoneos;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
-				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
 		};
-		B726EC0DC7E04B79948152D6 /* Debug */ = {
+		1A0000000000000000000014 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GENERATE_ASSET_SYMBOLS = NO;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 6XV7GUPKCH;
+				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = Info.plist;
-				INFOPLIST_KEY_LSApplicationCategory_TYPE = "public.app-category.healthcare-fitness";
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UIRequiredDeviceCapabilities = (
-					armv7,
-				);
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_FILE = SilentNight/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -304,24 +215,15 @@
 			};
 			name = Debug;
 		};
-		5D5243DD0F87422289A4EEF6 /* Release */ = {
+		1A0000000000000000000015 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GENERATE_ASSET_SYMBOLS = NO;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 6XV7GUPKCH;
+				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = Info.plist;
-				INFOPLIST_KEY_LSApplicationCategory_TYPE = "public.app-category.healthcare-fitness";
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UIRequiredDeviceCapabilities = (
-					armv7,
-				);
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_FILE = SilentNight/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -338,25 +240,26 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		72B9B92291B9493998C245D0 /* Build configuration list for PBXProject "SilentNight" */ = {
+		1A0000000000000000000010 /* Build configuration list for PBXProject "SilentNight" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				FBD109A6087A40E9941F8C01 /* Debug */,
-				D4D04BA40486471DA1947DAA /* Release */,
+				1A0000000000000000000012 /* Debug */,
+				1A0000000000000000000013 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		A412FE08AD6D495DADA6AED7 /* Build configuration list for PBXNativeTarget "SilentNight" */ = {
+		1A0000000000000000000011 /* Build configuration list for PBXNativeTarget "SilentNight" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				B726EC0DC7E04B79948152D6 /* Debug */,
-				5D5243DD0F87422289A4EEF6 /* Release */,
+				1A0000000000000000000014 /* Debug */,
+				1A0000000000000000000015 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
 	};
-	rootObject = FABF8716A5DB4878B988E3FF /* Project object */;
+	rootObject = 1A0000000000000000000001 /* Project object */;
 }
