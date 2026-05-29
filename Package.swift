@@ -10,7 +10,7 @@ let package = Package(
     targets: [
         .target(
             name: "SilentNight",
-            path: "SilentNight/Sources",
+            path: "SilentNight",
             sources: [
                 "SilentNightApp.swift",
                 "ContentView.swift",
