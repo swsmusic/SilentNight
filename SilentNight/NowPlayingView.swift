@@ -6,13 +6,11 @@ struct NowPlayingView: View {
     @EnvironmentObject var micMonitor: MicMonitor
 
     var body: some View {
-        VStack(spacing: 32) {
-            Spacer()
+        VStack(spacing: 28) {
+            Spacer(minLength: 8)
 
             // Noise type selector
             noiseTypeSelector
-
-            Spacer()
 
             // Waveform visualization
             WaveformView(isPlaying: audioEngine.isPlaying, noiseType: audioEngine.noiseType)
@@ -21,7 +19,7 @@ struct NowPlayingView: View {
             // Volume control
             volumeControl
 
-            Spacer()
+            Spacer(minLength: 4)
 
             // Play / Pause button
             PlayPauseButton(isPlaying: audioEngine.isPlaying) {
@@ -34,7 +32,7 @@ struct NowPlayingView: View {
             // Mic monitor status
             micStatusCard
 
-            Spacer()
+            Spacer(minLength: 8)
         }
         .padding(.horizontal, 24)
     }
@@ -43,25 +41,30 @@ struct NowPlayingView: View {
 
     private var noiseTypeSelector: some View {
         VStack(spacing: 12) {
-            Text("Noise Type")
-                .font(.subheadline)
-                .foregroundColor(.gray)
+            Text("NOISE TYPE")
+                .font(.caption.weight(.semibold))
+                .tracking(1.5)
+                .foregroundColor(Theme.textSecondary)
 
-            HStack(spacing: 12) {
+            HStack(spacing: 10) {
                 ForEach(AudioEngine.NoiseType.allCases, id: \.self) { type in
+                    let selected = audioEngine.noiseType == type
                     Button(action: { audioEngine.setNoiseType(type) }) {
                         Text(type.displayName)
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(audioEngine.noiseType == type ? .black : Color(red: 0.7, green: 0.7, blue: 0.7))
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(selected ? .black : Theme.textPrimary)
                             .padding(.horizontal, 16)
-                            .padding(.vertical, 8)
-                            .background(
-                                RoundedRectangle(cornerRadius: 20)
-                                    .fill(audioEngine.noiseType == type
-                                          ? Color(red: 1.0, green: 0.7, blue: 0.3)
-                                          : Color(red: 0.15, green: 0.14, blue: 0.13))
-                            )
+                            .padding(.vertical, 9)
+                            .background {
+                                if selected {
+                                    Capsule().fill(Theme.accentGradient)
+                                } else {
+                                    Capsule().fill(.ultraThinMaterial)
+                                        .overlay(Capsule().stroke(Theme.cardStroke, lineWidth: 1))
+                                }
+                            }
                     }
+                    .animation(.easeInOut(duration: 0.18), value: selected)
                 }
             }
         }
@@ -71,18 +74,19 @@ struct NowPlayingView: View {
 
     private var volumeControl: some View {
         VStack(spacing: 8) {
-            HStack {
-                Image(systemVolumeIcon)
-                    .foregroundColor(Color(red: 1.0, green: 0.7, blue: 0.3))
+            HStack(spacing: 12) {
+                Image(systemName: systemVolumeIcon)
+                    .foregroundColor(Theme.accent)
+                    .frame(width: 22)
                 Slider(value: $audioEngine.volume, in: 0...1)
-                    .accentColor(Color(red: 1.0, green: 0.7, blue: 0.3))
+                    .tint(Theme.accent)
                 Image(systemName: "speaker.wave.2.fill")
-                    .foregroundColor(Color(red: 1.0, green: 0.7, blue: 0.3))
+                    .foregroundColor(Theme.accent)
             }
 
             Text("\(Int(audioEngine.volume * 100))%")
-                .font(.caption)
-                .foregroundColor(.gray)
+                .font(.caption.weight(.medium))
+                .foregroundColor(Theme.textSecondary)
         }
     }
 
@@ -98,56 +102,50 @@ struct NowPlayingView: View {
         Button(action: { audioEngine.isAutoMode.toggle() }) {
             HStack {
                 Image(systemName: audioEngine.isAutoMode ? "checkmark.circle.fill" : "circle")
-                    .foregroundColor(audioEngine.isAutoMode ? Color(red: 1.0, green: 0.7, blue: 0.3) : .gray)
+                    .foregroundColor(audioEngine.isAutoMode ? Theme.accent : Theme.textSecondary)
                 Text("Auto-adjust for snoring")
-                    .font(.subheadline)
-                    .foregroundColor(.gray)
+                    .font(.subheadline.weight(.medium))
+                    .foregroundColor(Theme.textPrimary)
+                Spacer()
             }
             .padding(.horizontal, 16)
-            .padding(.vertical, 10)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color(red: 0.12, green: 0.11, blue: 0.10))
-            )
+            .padding(.vertical, 12)
+            .glassCard(cornerRadius: 14)
         }
     }
 
     // MARK: - Mic Status
 
     private var micStatusCard: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 10) {
             HStack {
                 Image(systemName: micMonitor.isMonitoring ? "mic.fill" : "mic.slash.fill")
-                    .foregroundColor(micMonitor.isMonitoring ? .green : .gray)
+                    .foregroundColor(micMonitor.isMonitoring ? .green : Theme.textSecondary)
                 Text(micMonitor.isMonitoring ? "Microphone Active" : "Microphone Off")
-                    .font(.subheadline)
-                    .foregroundColor(micMonitor.isMonitoring ? .green : .gray)
+                    .font(.subheadline.weight(.medium))
+                    .foregroundColor(micMonitor.isMonitoring ? .green : Theme.textSecondary)
                 Spacer()
                 Toggle("", isOn: Binding(
                     get: { micMonitor.isMonitoring },
                     set: { _ in micMonitor.toggleMonitoring() }
                 ))
                 .labelsHidden()
-                .toggleStyle(SwitchToggleStyle(tint: Color(red: 1.0, green: 0.7, blue: 0.3)))
+                .toggleStyle(SwitchToggleStyle(tint: Theme.accent))
             }
 
             if micMonitor.isMonitoring {
                 HStack {
                     Text("Snoring: \(micMonitor.snoreLevel.label)")
-                        .font(.caption)
+                        .font(.caption.weight(.medium))
                         .foregroundColor(levelColor)
                     Spacer()
-                    // Level meter
                     LevelMeter(level: micMonitor.currentLevel)
                         .frame(width: 100, height: 8)
                 }
             }
         }
         .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color(red: 0.12, green: 0.11, blue: 0.10))
-        )
+        .glassCard()
     }
 
     private var levelColor: Color {
@@ -164,16 +162,26 @@ struct PlayPauseButton: View {
 
     var body: some View {
         Button(action: action) {
-            Image(systemName: isPlaying ? "pause.circle.fill" : "play.circle.fill")
-                .resizable()
-                .frame(width: 80, height: 80)
-                .foregroundColor(Color(red: 1.0, green: 0.7, blue: 0.3))
-                .background(
-                    Circle()
-                        .fill(Color(red: 0.15, green: 0.14, blue: 0.13))
-                        .frame(width: 88, height: 88)
-                )
+            ZStack {
+                // Outer glow
+                Circle()
+                    .fill(Theme.accent.opacity(isPlaying ? 0.35 : 0.18))
+                    .frame(width: 120, height: 120)
+                    .blur(radius: 24)
+
+                // Glass disc
+                Circle()
+                    .fill(.ultraThinMaterial)
+                    .overlay(Circle().stroke(Theme.cardStroke, lineWidth: 1))
+                    .frame(width: 96, height: 96)
+
+                Image(systemName: isPlaying ? "pause.fill" : "play.fill")
+                    .font(.system(size: 34, weight: .bold))
+                    .foregroundStyle(Theme.accentGradient)
+                    .offset(x: isPlaying ? 0 : 3)
+            }
         }
+        .animation(.easeInOut(duration: 0.2), value: isPlaying)
     }
 }
 
@@ -185,11 +193,11 @@ struct LevelMeter: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack(alignment: .leading) {
-                RoundedRectangle(cornerRadius: 4)
-                    .fill(Color(red: 0.2, green: 0.2, blue: 0.2))
+                Capsule()
+                    .fill(Color.white.opacity(0.12))
 
-                RoundedRectangle(cornerRadius: 4)
-                    .fill(Color(red: 1.0, green: 0.7, blue: 0.3))
+                Capsule()
+                    .fill(Theme.accentGradient)
                     .frame(width: geometry.size.width * CGFloat(min(1.0, level)))
             }
         }

@@ -18,7 +18,7 @@ struct SettingsView: View {
                                     get: { micMonitor.isMonitoring },
                                     set: { _ in micMonitor.toggleMonitoring() }
                                 ))
-                                .toggleStyle(SwitchToggleStyle(tint: Color(red: 1.0, green: 0.7, blue: 0.3)))
+                                .toggleStyle(SwitchToggleStyle(tint: Theme.accent))
                             }
 
                             // Sensitivity slider
@@ -26,14 +26,14 @@ struct SettingsView: View {
                                 HStack {
                                     Text("Sensitivity")
                                         .font(.subheadline)
-                                        .foregroundColor(Color(red: 0.7, green: 0.7, blue: 0.7))
+                                        .foregroundColor(Theme.textSecondary)
                                     Spacer()
                                     Text(sensitivityLabel)
-                                        .font(.subheadline)
-                                        .foregroundColor(Color(red: 1.0, green: 0.7, blue: 0.3))
+                                        .font(.subheadline.weight(.medium))
+                                        .foregroundColor(Theme.accent)
                                 }
                                 Slider(value: $micMonitor.sensitivity, in: 0...1)
-                                    .accentColor(Color(red: 1.0, green: 0.7, blue: 0.3))
+                                    .tint(Theme.accent)
                             }
                         }
                     }
@@ -43,21 +43,21 @@ struct SettingsView: View {
                         VStack(spacing: 16) {
                             SettingsRow(label: "Auto-adjust Volume") {
                                 Toggle("", isOn: $audioEngine.isAutoMode)
-                                    .toggleStyle(SwitchToggleStyle(tint: Color(red: 1.0, green: 0.7, blue: 0.3)))
+                                    .toggleStyle(SwitchToggleStyle(tint: Theme.accent))
                             }
 
                             VStack(alignment: .leading, spacing: 8) {
                                 HStack {
                                     Text("Default Volume")
                                         .font(.subheadline)
-                                        .foregroundColor(Color(red: 0.7, green: 0.7, blue: 0.7))
+                                        .foregroundColor(Theme.textSecondary)
                                     Spacer()
                                     Text("\(Int(audioEngine.volume * 100))%")
-                                        .font(.subheadline)
-                                        .foregroundColor(Color(red: 1.0, green: 0.7, blue: 0.3))
+                                        .font(.subheadline.weight(.medium))
+                                        .foregroundColor(Theme.accent)
                                 }
                                 Slider(value: $audioEngine.volume, in: 0...1)
-                                    .accentColor(Color(red: 1.0, green: 0.7, blue: 0.3))
+                                    .tint(Theme.accent)
                             }
                         }
                     }
@@ -67,20 +67,21 @@ struct SettingsView: View {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("SilentNight")
                                 .font(.subheadline.bold())
-                                .foregroundColor(Color(red: 1.0, green: 0.7, blue: 0.3))
+                                .foregroundColor(Theme.accent)
                             Text("Brown noise generator with automatic snoring detection and adaptive volume.")
                                 .font(.caption)
-                                .foregroundColor(Color(red: 0.5, green: 0.5, blue: 0.5))
+                                .foregroundColor(Theme.textSecondary)
                             Text("Version 1.0.0")
                                 .font(.caption2)
-                                .foregroundColor(Color(red: 0.4, green: 0.4, blue: 0.4))
+                                .foregroundColor(Theme.textSecondary.opacity(0.7))
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }
                 }
                 .padding()
             }
-            .background(Color(red: 0.05, green: 0.04, blue: 0.03))
+            .scrollContentBackground(.hidden)
+            .background(Theme.nightSky.ignoresSafeArea())
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
             .preferredColorScheme(.dark)
@@ -108,16 +109,13 @@ struct SettingsSection<Content: View>: View {
         VStack(alignment: .leading, spacing: 12) {
             Label(title, systemImage: icon)
                 .font(.headline)
-                .foregroundColor(Color(red: 1.0, green: 0.7, blue: 0.3))
+                .foregroundColor(Theme.accent)
 
             VStack(spacing: 0) {
                 content
             }
             .padding()
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color(red: 0.12, green: 0.11, blue: 0.10))
-            )
+            .glassCard()
         }
     }
 }
@@ -130,7 +128,7 @@ struct SettingsRow<Content: View>: View {
         HStack {
             Text(label)
                 .font(.subheadline)
-                .foregroundColor(Color(red: 0.7, green: 0.7, blue: 0.7))
+                .foregroundColor(Theme.textPrimary)
             Spacer()
             content
         }

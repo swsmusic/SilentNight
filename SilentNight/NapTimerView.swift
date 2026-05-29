@@ -15,7 +15,7 @@ struct NapTimerView: View {
         VStack(spacing: 32) {
             Text("Nap Timer")
                 .font(.title2.bold())
-                .foregroundColor(Color(red: 1.0, green: 0.7, blue: 0.3))
+                .foregroundStyle(Theme.accentGradient)
                 .padding(.top, 24)
 
             Spacer()
@@ -52,10 +52,11 @@ struct NapTimerView: View {
         VStack(spacing: 16) {
             Text("Set timer duration")
                 .font(.subheadline)
-                .foregroundColor(.gray)
+                .foregroundColor(Theme.textSecondary)
 
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 4), spacing: 8) {
                 ForEach(presetTimes, id: \.self) { minutes in
+                    let selected = selectedMinutes == minutes
                     Button(action: { selectedMinutes = minutes }) {
                         VStack(spacing: 4) {
                             Text("\(minutes)")
@@ -63,14 +64,19 @@ struct NapTimerView: View {
                             Text("min")
                                 .font(.caption2)
                         }
-                        .foregroundColor(selectedMinutes == minutes ? .black : Color(red: 0.7, green: 0.7, blue: 0.7))
+                        .foregroundColor(selected ? .black : Theme.textPrimary)
                         .frame(width: 60, height: 60)
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(selectedMinutes == minutes
-                                      ? Color(red: 1.0, green: 0.7, blue: 0.3)
-                                      : Color(red: 0.15, green: 0.14, blue: 0.13))
-                        )
+                        .background {
+                            if selected {
+                                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                    .fill(Theme.accentGradient)
+                            } else {
+                                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                    .fill(.ultraThinMaterial)
+                                    .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                        .stroke(Theme.cardStroke, lineWidth: 1))
+                            }
+                        }
                     }
                 }
             }
@@ -79,10 +85,10 @@ struct NapTimerView: View {
             // Custom stepper
             HStack {
                 Text("Custom:")
-                    .foregroundColor(.gray)
+                    .foregroundColor(Theme.textSecondary)
                 Stepper(value: $selectedMinutes, in: 5...180, step: 5) {
                     Text("\(selectedMinutes) minutes")
-                        .foregroundColor(Color(red: 1.0, green: 0.7, blue: 0.3))
+                        .foregroundColor(Theme.accent)
                 }
             }
             .padding(.horizontal)
@@ -95,32 +101,33 @@ struct NapTimerView: View {
         VStack(spacing: 24) {
             ZStack {
                 Circle()
-                    .stroke(Color(red: 0.2, green: 0.2, blue: 0.2), lineWidth: 8)
+                    .stroke(Color.white.opacity(0.10), lineWidth: 10)
                     .frame(width: 200, height: 200)
 
                 Circle()
                     .trim(from: 0, to: progress)
                     .stroke(
-                        Color(red: 1.0, green: 0.7, blue: 0.3),
-                        style: StrokeStyle(lineWidth: 8, lineCap: .round)
+                        Theme.accentGradient,
+                        style: StrokeStyle(lineWidth: 10, lineCap: .round)
                     )
                     .frame(width: 200, height: 200)
                     .rotationEffect(.degrees(-90))
+                    .shadow(color: Theme.accent.opacity(0.5), radius: 8)
                     .animation(.linear(duration: 1), value: progress)
 
                 VStack {
                     Text(formattedTime)
                         .font(.system(size: 48, weight: .bold, design: .rounded))
-                        .foregroundColor(Color(red: 1.0, green: 0.7, blue: 0.3))
+                        .foregroundColor(Theme.textPrimary)
                     Text("remaining")
                         .font(.subheadline)
-                        .foregroundColor(.gray)
+                        .foregroundColor(Theme.textSecondary)
                 }
             }
 
             Text("Noise will stop when timer ends")
                 .font(.caption)
-                .foregroundColor(.gray)
+                .foregroundColor(Theme.textSecondary)
         }
     }
 
@@ -150,8 +157,8 @@ struct NapTimerView: View {
                 .frame(maxWidth: .infinity)
                 .padding()
                 .background(
-                    RoundedRectangle(cornerRadius: 16)
-                        .fill(Color(red: 1.0, green: 0.7, blue: 0.3))
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(Theme.accentGradient)
                 )
         }
         .padding(.horizontal)
@@ -161,12 +168,12 @@ struct NapTimerView: View {
         Button(action: cancelTimer) {
             Text("Cancel Timer")
                 .font(.headline)
-                .foregroundColor(Color(red: 1.0, green: 0.7, blue: 0.3))
+                .foregroundColor(Theme.accent)
                 .frame(maxWidth: .infinity)
                 .padding()
                 .background(
-                    RoundedRectangle(cornerRadius: 16)
-                        .stroke(Color(red: 1.0, green: 0.7, blue: 0.3), lineWidth: 2)
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .stroke(Theme.accent, lineWidth: 2)
                 )
         }
         .padding(.horizontal)
