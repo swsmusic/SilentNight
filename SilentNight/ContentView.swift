@@ -6,12 +6,62 @@ struct ContentView: View {
     @EnvironmentObject var micMonitor: MicMonitor
 
     var body: some View {
+        TabView {
+            NavigationStack {
+                NowPlayingView()
+                    .background(backgroundLayer)
+                    .navigationTitle("SilentNight")
+                    .toolbar {
+                        ToolbarItem(placement: .topBarTrailing) {
+                            if micMonitor.isMonitoring {
+                                listeningIndicator
+                            }
+                        }
+                    }
+                    .toolbarBackground(.hidden, for: .navigationBar)
+            }
+            .tabItem {
+                Label("Play", systemImage: "waveform")
+            }
+
+            NavigationStack {
+                NapTimerView()
+                    .background(backgroundLayer)
+                    .navigationTitle("Nap Timer")
+                    .toolbarBackground(.hidden, for: .navigationBar)
+            }
+            .tabItem {
+                Label("Timer", systemImage: "timer")
+            }
+
+            SettingsView()
+                .tabItem {
+                    Label("Settings", systemImage: "gearshape")
+                }
+        }
+        .tint(Theme.accent)
+    }
+
+    private var listeningIndicator: some View {
+        HStack(spacing: 6) {
+            Circle()
+                .fill(Color.green)
+                .frame(width: 7, height: 7)
+                .shadow(color: .green.opacity(0.8), radius: 4)
+            Text("Listening")
+                .font(.caption2.weight(.medium))
+                .foregroundColor(.green)
+        }
+        .transition(.opacity)
+        .animation(.easeInOut, value: micMonitor.isMonitoring)
+    }
+
+    /// Deep night-sky background shared by the player and timer tabs.
+    private var backgroundLayer: some View {
         ZStack {
-            // Deep night-sky background
             Theme.nightSky
                 .ignoresSafeArea()
 
-            // Soft moon glow in the upper third
             RadialGradient(
                 colors: [Theme.accent.opacity(0.16), .clear],
                 center: .init(x: 0.5, y: 0.18),
@@ -20,58 +70,7 @@ struct ContentView: View {
             )
             .ignoresSafeArea()
             .blendMode(.screen)
-
-            VStack(spacing: 0) {
-                headerView
-
-                TabView {
-                    NowPlayingView()
-                        .tabItem {
-                            Label("Play", systemImage: "waveform")
-                        }
-
-                    NapTimerView()
-                        .tabItem {
-                            Label("Timer", systemImage: "timer")
-                        }
-
-                    SettingsView()
-                        .tabItem {
-                            Label("Settings", systemImage: "gearshape")
-                        }
-                }
-                .tint(Theme.accent)
-            }
         }
-    }
-
-    private var headerView: some View {
-        VStack(spacing: 6) {
-            HStack(spacing: 8) {
-                Image(systemName: "moon.stars.fill")
-                    .font(.system(size: 20, weight: .medium))
-                    .foregroundStyle(Theme.accentGradient)
-                Text("SilentNight")
-                    .font(.system(size: 28, weight: .bold, design: .rounded))
-                    .foregroundStyle(Theme.accentGradient)
-            }
-
-            if micMonitor.isMonitoring {
-                HStack(spacing: 6) {
-                    Circle()
-                        .fill(Color.green)
-                        .frame(width: 7, height: 7)
-                        .shadow(color: .green.opacity(0.8), radius: 4)
-                    Text("Listening")
-                        .font(.caption2.weight(.medium))
-                        .foregroundColor(.green)
-                }
-                .transition(.opacity)
-            }
-        }
-        .padding(.top, 16)
-        .padding(.bottom, 10)
-        .animation(.easeInOut, value: micMonitor.isMonitoring)
     }
 }
 

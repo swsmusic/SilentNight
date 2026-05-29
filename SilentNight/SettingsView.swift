@@ -6,20 +6,16 @@ struct SettingsView: View {
     @EnvironmentObject var micMonitor: MicMonitor
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ScrollView {
                 VStack(spacing: 20) {
-                    // Microphone section
-                    SettingsSection(title: "Microphone", icon: "mic.fill") {
-                        VStack(spacing: 16) {
-                            // Monitoring toggle
-                            SettingsRow(label: "Monitor Snoring") {
-                                Toggle("", isOn: Binding(
-                                    get: { micMonitor.isMonitoring },
-                                    set: { _ in micMonitor.toggleMonitoring() }
-                                ))
-                                .toggleStyle(SwitchToggleStyle(tint: Theme.accent))
-                            }
+                    // Anti-Snore sensitivity (the on/off toggle lives on the Play screen)
+                    SettingsSection(title: "Anti-Snore", icon: "waveform.badge.mic") {
+                        VStack(alignment: .leading, spacing: 16) {
+                            Text("Use the Anti-Snore toggle on the Play screen to turn on microphone monitoring. SilentNight will listen for snoring and automatically adjust the noise level.")
+                                .font(.caption)
+                                .foregroundColor(Theme.textSecondary)
+                                .frame(maxWidth: .infinity, alignment: .leading)
 
                             // Sensitivity slider
                             VStack(alignment: .leading, spacing: 8) {
@@ -40,25 +36,18 @@ struct SettingsView: View {
 
                     // Audio section
                     SettingsSection(title: "Audio", icon: "waveform") {
-                        VStack(spacing: 16) {
-                            SettingsRow(label: "Auto-adjust Volume") {
-                                Toggle("", isOn: $audioEngine.isAutoMode)
-                                    .toggleStyle(SwitchToggleStyle(tint: Theme.accent))
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                Text("Default Volume")
+                                    .font(.subheadline)
+                                    .foregroundColor(Theme.textSecondary)
+                                Spacer()
+                                Text("\(Int(audioEngine.volume * 100))%")
+                                    .font(.subheadline.weight(.medium))
+                                    .foregroundColor(Theme.accent)
                             }
-
-                            VStack(alignment: .leading, spacing: 8) {
-                                HStack {
-                                    Text("Default Volume")
-                                        .font(.subheadline)
-                                        .foregroundColor(Theme.textSecondary)
-                                    Spacer()
-                                    Text("\(Int(audioEngine.volume * 100))%")
-                                        .font(.subheadline.weight(.medium))
-                                        .foregroundColor(Theme.accent)
-                                }
-                                Slider(value: $audioEngine.volume, in: 0...1)
-                                    .tint(Theme.accent)
-                            }
+                            Slider(value: $audioEngine.volume, in: 0...1)
+                                .tint(Theme.accent)
                         }
                     }
 
@@ -116,21 +105,6 @@ struct SettingsSection<Content: View>: View {
             }
             .padding()
             .glassCard()
-        }
-    }
-}
-
-struct SettingsRow<Content: View>: View {
-    let label: String
-    @ViewBuilder let content: Content
-
-    var body: some View {
-        HStack {
-            Text(label)
-                .font(.subheadline)
-                .foregroundColor(Theme.textPrimary)
-            Spacer()
-            content
         }
     }
 }

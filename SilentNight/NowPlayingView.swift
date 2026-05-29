@@ -26,11 +26,8 @@ struct NowPlayingView: View {
                 audioEngine.togglePlayPause()
             }
 
-            // Auto-adjust toggle
-            autoAdjustToggle
-
-            // Mic monitor status
-            micStatusCard
+            // Anti-Snore (combined mic monitoring + auto-adjust)
+            antiSnoreCard
 
             Spacer(minLength: 8)
         }
@@ -96,41 +93,49 @@ struct NowPlayingView: View {
         return "speaker.wave.2"
     }
 
-    // MARK: - Auto Adjust
+    // MARK: - Anti-Snore (mic monitoring + auto-adjust, controlled together)
 
-    private var autoAdjustToggle: some View {
-        Button(action: { audioEngine.isAutoMode.toggle() }) {
-            HStack {
-                Image(systemName: audioEngine.isAutoMode ? "checkmark.circle.fill" : "circle")
-                    .foregroundColor(audioEngine.isAutoMode ? Theme.accent : Theme.textSecondary)
-                Text("Auto-adjust for snoring")
-                    .font(.subheadline.weight(.medium))
-                    .foregroundColor(Theme.textPrimary)
-                Spacer()
+    /// Single switch: turning Anti-Snore on starts mic monitoring AND enables
+    /// auto-adjust; turning it off stops both. Per product direction the mic and
+    /// anti-snore are one feature — if anti-snore is on, the mic is on.
+    private var antiSnoreBinding: Binding<Bool> {
+        Binding(
+            get: { micMonitor.isMonitoring },
+            set: { on in
+                audioEngine.isAutoMode = on
+                if on {
+                    micMonitor.startMonitoring()
+                } else {
+                    micMonitor.stopMonitoring()
+                }
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            .glassCard(cornerRadius: 14)
-        }
+        )
     }
 
-    // MARK: - Mic Status
+    private var antiSnoreCard: some View {
+        VStack(spacing: 12) {
+            HStack(spacing: 12) {
+                Image(systemName: micMonitor.isMonitoring ? "waveform.badge.mic" : "moon.zzz.fill")
+                    .font(.system(size: 18))
+                    .foregroundColor(micMonitor.isMonitoring ? Theme.accent : Theme.textSecondary)
+                    .frame(width: 24)
 
-    private var micStatusCard: some View {
-        VStack(spacing: 10) {
-            HStack {
-                Image(systemName: micMonitor.isMonitoring ? "mic.fill" : "mic.slash.fill")
-                    .foregroundColor(micMonitor.isMonitoring ? .green : Theme.textSecondary)
-                Text(micMonitor.isMonitoring ? "Microphone Active" : "Microphone Off")
-                    .font(.subheadline.weight(.medium))
-                    .foregroundColor(micMonitor.isMonitoring ? .green : Theme.textSecondary)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Anti-Snore")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundColor(Theme.textPrimary)
+                    Text(micMonitor.isMonitoring
+                         ? "Listening — auto-raising noise to cover snoring"
+                         : "Off — tap to listen and adapt automatically")
+                        .font(.caption)
+                        .foregroundColor(Theme.textSecondary)
+                }
+
                 Spacer()
-                Toggle("", isOn: Binding(
-                    get: { micMonitor.isMonitoring },
-                    set: { _ in micMonitor.toggleMonitoring() }
-                ))
-                .labelsHidden()
-                .toggleStyle(SwitchToggleStyle(tint: Theme.accent))
+
+                Toggle("", isOn: antiSnoreBinding)
+                    .labelsHidden()
+                    .toggleStyle(SwitchToggleStyle(tint: Theme.accent))
             }
 
             if micMonitor.isMonitoring {
@@ -146,6 +151,7 @@ struct NowPlayingView: View {
         }
         .padding()
         .glassCard()
+        .animation(.easeInOut, value: micMonitor.isMonitoring)
     }
 
     private var levelColor: Color {
