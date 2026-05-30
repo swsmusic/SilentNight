@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- Night sky gradient background, matches Theme.nightSky in the app -->
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#121529"/>
+      <stop offset="55%"  stop-color="#0A0B17"/>
+      <stop offset="100%" stop-color="#020208"/>
+    </linearGradient>
+    <radialGradient id="moonGlow" cx="0.62" cy="0.40" r="0.55">
+      <stop offset="0%"   stop-color="#FFB766" stop-opacity="0.35"/>
+      <stop offset="60%"  stop-color="#FFB766" stop-opacity="0.05"/>
+      <stop offset="100%" stop-color="#FFB766" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="moon" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%"   stop-color="#FFE2B5"/>
+      <stop offset="55%"  stop-color="#FFB766"/>
+      <stop offset="100%" stop-color="#ED8A42"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Full bleed background (icons must be opaque) -->
+  <rect x="0" y="0" width="1024" height="1024" fill="url(#sky)"/>
+
+  <!-- Soft glow around the moon -->
+  <rect x="0" y="0" width="1024" height="1024" fill="url(#moonGlow)"/>
+
+  <!-- Crescent moon: full disc minus offset disc -->
+  <mask id="crescent">
+    <rect x="0" y="0" width="1024" height="1024" fill="black"/>
+    <circle cx="600" cy="430" r="280" fill="white"/>
+    <circle cx="700" cy="385" r="240" fill="black"/>
+  </mask>
+  <rect x="0" y="0" width="1024" height="1024" fill="url(#moon)" mask="url(#crescent)"/>
+
+  <!-- Stars / sleep dots -->
+  <g fill="#FFFFFF" opacity="0.85">
+    <circle cx="200" cy="240" r="4"/>
+    <circle cx="280" cy="160" r="3"/>
+    <circle cx="160" cy="380" r="5"/>
+    <circle cx="340" cy="280" r="3"/>
+    <circle cx="120" cy="520" r="2.5"/>
+    <circle cx="860" cy="160" r="3"/>
+    <circle cx="930" cy="260" r="2.5"/>
+  </g>
+
+  <!-- Sleep waveform — a subtle sine-ish line at the bottom suggesting noise/breath -->
+  <path d="M 100 820
+           Q 200 760, 300 820
+           T 500 820
+           T 700 820
+           T 900 820"
+        fill="none"
+        stroke="#FFB766"
+        stroke-width="14"
+        stroke-linecap="round"
+        opacity="0.85"/>
+
+  <!-- Second softer wave underneath -->
+  <path d="M 100 880
+           Q 200 850, 300 880
+           T 500 880
+           T 700 880
+           T 900 880"
+        fill="none"
+        stroke="#FFB766"
+        stroke-width="8"
+        stroke-linecap="round"
+        opacity="0.45"/>
+</svg>
