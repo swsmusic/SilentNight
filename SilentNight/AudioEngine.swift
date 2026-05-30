@@ -2,11 +2,14 @@ import SwiftUI
 import Combine
 import AVFoundation
 
-/// Controls brown noise playback with adjustable volume and noise type
+/// Controls noise playback with adjustable volume and noise type.
+/// Designed to recover gracefully from interruptions, route changes, and
+/// audio-stack resets so the user can switch sounds repeatedly without
+/// silent failure.
 final class AudioEngine: ObservableObject {
     private var audioPlayer: AVAudioPlayerNode?
     private var audioEngine: AVAudioEngine?
-    private var distortion: AVAudioUnitDistortion?
+    private var currentBuffer: AVAudioPCMBuffer?
 
     @Published var isPlaying = false
     @Published var volume: Double = 0.5 {
@@ -35,43 +38,106 @@ final class AudioEngine: ObservableObject {
 
     init() {
         setupAudioSession()
-        pregenerateNoise()
+        registerSystemObservers()
+    }
+
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
 
     private func setupAudioSession() {
         do {
             let session = AVAudioSession.sharedInstance()
-            // .playAndRecord so MicMonitor + playback can coexist for Anti-Snore.
-            // .defaultToSpeaker so audio routes to speaker (not earpiece) when mic is also active.
             try session.setCategory(.playAndRecord,
                                     mode: .default,
                                     options: [.defaultToSpeaker, .allowBluetooth, .mixWithOthers])
-            try session.setActive(true)
+            try session.setActive(true, options: [])
         } catch {
-            print("Audio session setup failed: \(error)")
+            print("AudioEngine session setup failed: \(error)")
         }
     }
 
-    private func pregenerateNoise() {
-        // Generate noise buffer when user selects a type
+    // MARK: - System Observers (interruptions / route / reset)
+
+    private func registerSystemObservers() {
+        let nc = NotificationCenter.default
+        nc.addObserver(self, selector: #selector(handleInterruption(_:)),
+                       name: AVAudioSession.interruptionNotification, object: nil)
+        nc.addObserver(self, selector: #selector(handleRouteChange(_:)),
+                       name: AVAudioSession.routeChangeNotification, object: nil)
+        nc.addObserver(self, selector: #selector(handleMediaServicesReset(_:)),
+                       name: AVAudioSession.mediaServicesWereResetNotification, object: nil)
+        nc.addObserver(self, selector: #selector(handleEngineConfigurationChange(_:)),
+                       name: .AVAudioEngineConfigurationChange, object: nil)
+    }
+
+    @objc private func handleInterruption(_ note: Notification) {
+        guard
+            let info = note.userInfo,
+            let typeRaw = info[AVAudioSessionInterruptionTypeKey] as? UInt,
+            let type = AVAudioSession.InterruptionType(rawValue: typeRaw)
+        else { return }
+        switch type {
+        case .began:
+            // System paused us (phone call, alarm, Siri). Reflect in UI.
+            isPlaying = false
+        case .ended:
+            // If system says we should resume, do it.
+            if let optionsRaw = info[AVAudioSessionInterruptionOptionKey] as? UInt {
+                let options = AVAudioSession.InterruptionOptions(rawValue: optionsRaw)
+                if options.contains(.shouldResume) { play() }
+            }
+        @unknown default:
+            break
+        }
+    }
+
+    @objc private func handleRouteChange(_ note: Notification) {
+        // Audio route changed (e.g., Bluetooth disconnect). Refresh engine if running.
+        guard isPlaying, let engine = audioEngine else { return }
+        if !engine.isRunning {
+            do { try engine.start() } catch {
+                print("Route-change engine restart failed: \(error)")
+                isPlaying = false
+            }
+        }
+    }
+
+    @objc private func handleMediaServicesReset(_ note: Notification) {
+        // The whole audio stack reset. Tear down and rebuild from scratch.
+        let wasPlaying = isPlaying
+        tearDownPipeline()
+        setupAudioSession()
+        if wasPlaying { play() }
+    }
+
+    @objc private func handleEngineConfigurationChange(_ note: Notification) {
+        // Engine itself reconfigured (e.g., new hardware format). Restart it.
+        guard isPlaying, let engine = audioEngine else { return }
+        if !engine.isRunning {
+            do { try engine.start() } catch {
+                print("Engine reconfigure restart failed: \(error)")
+                isPlaying = false
+            }
+        }
     }
 
     // MARK: - Playback Control
 
     func play() {
-        if audioEngine == nil {
-            setupNoisePipeline()
-        }
+        ensurePipelineReady()
         guard let engine = audioEngine, let player = audioPlayer else {
             print("AudioEngine: pipeline not ready")
             isPlaying = false
             return
         }
         do {
-            if !engine.isRunning {
-                try engine.start()
-            }
+            if !engine.isRunning { try engine.start() }
+            // If the player was previously stopped (not just paused), its scheduled
+            // buffer is consumed. Reschedule so .play() actually plays something.
+            if !player.isPlaying { rescheduleBufferIfNeeded() }
             player.play()
+            adjustVolume()
             isPlaying = true
         } catch {
             print("AudioEngine failed to start: \(error)")
@@ -86,6 +152,9 @@ final class AudioEngine: ObservableObject {
 
     func stop() {
         audioPlayer?.stop()
+        // Keep the engine alive but reset the player state. Next play() will
+        // reschedule the buffer and resume.
+        audioEngine?.pause()
         isPlaying = false
     }
 
@@ -93,9 +162,9 @@ final class AudioEngine: ObservableObject {
         if isPlaying { pause() } else { play() }
     }
 
-    /// Increase volume to cover detected snoring. `multiplier` is the
-    /// SnoreLevel-derived intensity (0.0 none .. 0.2 high). Called when the
-    /// detected snore level changes in MicMonitor while Anti-Snore is on.
+    /// Increase volume in response to detected snoring. `multiplier` is the
+    /// SnoreLevel-derived intensity (0..0.2). Wired from
+    /// `NowPlayingView.onChange(of: micMonitor.snoreLevel)`.
     func boostForSnoring(multiplier: Float) {
         guard isAutoMode, multiplier > 0 else { return }
         volume = min(1.0, volume + Double(multiplier))
@@ -103,26 +172,40 @@ final class AudioEngine: ObservableObject {
 
     // MARK: - Noise Pipeline
 
-    private func setupNoisePipeline() {
+    private func ensurePipelineReady() {
+        guard audioEngine == nil else { return }
+        buildPipeline()
+    }
+
+    private func buildPipeline() {
         let engine = AVAudioEngine()
         let player = AVAudioPlayerNode()
 
-        // Generate buffer first so we can use its format for connection
         let buffer = generateNoiseBuffer(for: noiseType)
 
         engine.attach(player)
         engine.connect(player, to: engine.mainMixerNode, format: buffer.format)
-
         player.scheduleBuffer(buffer, at: nil, options: .loops, completionHandler: nil)
 
         self.audioEngine = engine
         self.audioPlayer = player
+        self.currentBuffer = buffer
         adjustVolume()
     }
 
-    private func scheduleBuffer(_ buffer: AVAudioPCMBuffer) {
+    private func rescheduleBufferIfNeeded() {
         guard let player = audioPlayer else { return }
+        let buffer = currentBuffer ?? generateNoiseBuffer(for: noiseType)
+        currentBuffer = buffer
         player.scheduleBuffer(buffer, at: nil, options: .loops, completionHandler: nil)
+    }
+
+    private func tearDownPipeline() {
+        audioPlayer?.stop()
+        audioEngine?.stop()
+        audioEngine = nil
+        audioPlayer = nil
+        currentBuffer = nil
     }
 
     private func adjustVolume() {
@@ -132,8 +215,12 @@ final class AudioEngine: ObservableObject {
     // MARK: - Noise Generation
 
     func setNoiseType(_ type: NoiseType) {
+        guard type != noiseType else { return }
         let wasPlaying = isPlaying
-        if wasPlaying { stop() }
+        // Hard tear-down so the next play() builds a fresh buffer of the NEW
+        // type. Without this, the looping buffer of the OLD type keeps playing
+        // and the switch silently does nothing.
+        tearDownPipeline()
         noiseType = type
         if wasPlaying { play() }
     }
@@ -179,7 +266,7 @@ final class AudioEngine: ObservableObject {
     }
 
     private func generatePinkNoise(samples: UnsafeMutablePointer<Float>, frameCount: Int) {
-        // Simplified pink noise using Voss-McCartney algorithm
+        // Voss-McCartney algorithm
         var b0: Float = 0, b1: Float = 0, b2: Float = 0
         var b3: Float = 0, b4: Float = 0, b5: Float = 0, b6: Float = 0
 
@@ -198,9 +285,8 @@ final class AudioEngine: ObservableObject {
     }
 
     private func generateGreyNoise(samples: UnsafeMutablePointer<Float>, frameCount: Int) {
-        // Grey noise: white noise with psychoacoustic equal-loudness curve approximation
+        // Grey noise: white noise with simple equal-loudness smoothing.
         generateWhiteNoise(samples: samples, frameCount: frameCount)
-        // Apply simple A-weighting approximation in time domain
         let alpha: Float = 0.99
         for i in 1..<frameCount {
             samples[i] = alpha * samples[i-1] + (1 - alpha) * samples[i]
