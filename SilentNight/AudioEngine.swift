@@ -41,7 +41,11 @@ final class AudioEngine: ObservableObject {
     private func setupAudioSession() {
         do {
             let session = AVAudioSession.sharedInstance()
-            try session.setCategory(.playback, mode: .default, options: [.mixWithOthers])
+            // .playAndRecord so MicMonitor + playback can coexist for Anti-Snore.
+            // .defaultToSpeaker so audio routes to speaker (not earpiece) when mic is also active.
+            try session.setCategory(.playAndRecord,
+                                    mode: .default,
+                                    options: [.defaultToSpeaker, .allowBluetooth, .mixWithOthers])
             try session.setActive(true)
         } catch {
             print("Audio session setup failed: \(error)")
@@ -58,9 +62,21 @@ final class AudioEngine: ObservableObject {
         if audioEngine == nil {
             setupNoisePipeline()
         }
-        audioPlayer?.play()
-        try? audioEngine?.start()
-        isPlaying = true
+        guard let engine = audioEngine, let player = audioPlayer else {
+            print("AudioEngine: pipeline not ready")
+            isPlaying = false
+            return
+        }
+        do {
+            if !engine.isRunning {
+                try engine.start()
+            }
+            player.play()
+            isPlaying = true
+        } catch {
+            print("AudioEngine failed to start: \(error)")
+            isPlaying = false
+        }
     }
 
     func pause() {
@@ -77,10 +93,12 @@ final class AudioEngine: ObservableObject {
         if isPlaying { pause() } else { play() }
     }
 
-    /// Increase volume to cover detected snoring (called by MicMonitor)
-    func boostForSnoring(level: Double) {
-        guard isAutoMode else { return }
-        volume = min(1.0, volume + level * 0.05)
+    /// Increase volume to cover detected snoring. `multiplier` is the
+    /// SnoreLevel-derived intensity (0.0 none .. 0.2 high). Called when the
+    /// detected snore level changes in MicMonitor while Anti-Snore is on.
+    func boostForSnoring(multiplier: Float) {
+        guard isAutoMode, multiplier > 0 else { return }
+        volume = min(1.0, volume + Double(multiplier))
     }
 
     // MARK: - Noise Pipeline
@@ -89,18 +107,17 @@ final class AudioEngine: ObservableObject {
         let engine = AVAudioEngine()
         let player = AVAudioPlayerNode()
 
-        engine.attach(player)
-        engine.connect(player, to: engine.mainMixerNode, format: nil)
-
+        // Generate buffer first so we can use its format for connection
         let buffer = generateNoiseBuffer(for: noiseType)
 
-        scheduleBuffer(buffer)
+        engine.attach(player)
+        engine.connect(player, to: engine.mainMixerNode, format: buffer.format)
+
+        player.scheduleBuffer(buffer, at: nil, options: .loops, completionHandler: nil)
 
         self.audioEngine = engine
         self.audioPlayer = player
-
-        // Re-schedule buffer completion handler
-        scheduleBuffer(buffer)
+        adjustVolume()
     }
 
     private func scheduleBuffer(_ buffer: AVAudioPCMBuffer) {

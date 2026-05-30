@@ -32,6 +32,11 @@ struct NowPlayingView: View {
             Spacer(minLength: 8)
         }
         .padding(.horizontal, 24)
+        // Anti-Snore auto-boost: when snore level changes upward while Anti-Snore is on,
+        // raise the noise volume by the SnoreLevel-derived multiplier.
+        .onChange(of: micMonitor.snoreLevel) { _, newLevel in
+            audioEngine.boostForSnoring(multiplier: newLevel.volumeBoostMultiplier)
+        }
     }
 
     // MARK: - Noise Type Selector
