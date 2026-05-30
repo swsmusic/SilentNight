@@ -165,7 +165,7 @@ struct NapTimerView: View {
     }
 
     private var cancelButton: some View {
-        Button(action: cancelTimer) {
+        Button(action: cancelTimerAndStopAudio) {
             Text("Cancel Timer")
                 .font(.headline)
                 .foregroundColor(Theme.accent)
@@ -208,11 +208,19 @@ struct NapTimerView: View {
         impact.impactOccurred()
     }
 
+    /// Invalidates the timer state only — used by onDisappear so navigating
+    /// away from the Timer tab doesn't kill noise the user wants to keep playing.
     private func cancelTimer() {
         timer?.invalidate()
         timer = nil
         isActive = false
         remainingSeconds = 0
+    }
+
+    /// User explicitly tapped Cancel — kill timer AND stop the noise it started.
+    private func cancelTimerAndStopAudio() {
+        cancelTimer()
+        audioEngine.stop()
     }
 }
 
