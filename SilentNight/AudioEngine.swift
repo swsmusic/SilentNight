@@ -1,6 +1,7 @@
 import SwiftUI
 import Combine
 import AVFoundation
+import MediaPlayer
 
 /// Controls noise playback with adjustable volume and noise type.
 /// Designed to recover gracefully from interruptions, route changes, and
@@ -15,14 +16,18 @@ final class AudioEngine: ObservableObject {
     private let fadeDuration: TimeInterval = 1.2
     private let fadeStepInterval: TimeInterval = 0.05
 
-    @Published var isPlaying = false
+    @Published var isPlaying = false {
+        didSet { updateNowPlayingInfo() }
+    }
     @Published var volume: Double = 0.5 {
         didSet {
             targetPlayerVolume = Float(volume)
             adjustVolume()
         }
     }
-    @Published var noiseType: NoiseType = .brown
+    @Published var noiseType: NoiseType = .brown {
+        didSet { updateNowPlayingInfo() }
+    }
     @Published var isAutoMode = false
 
     enum NoiseType: String, CaseIterable {
@@ -46,19 +51,26 @@ final class AudioEngine: ObservableObject {
     init() {
         setupAudioSession()
         registerSystemObservers()
+        setupRemoteCommands()
+        updateNowPlayingInfo()
     }
 
     deinit {
         fadeTimer?.invalidate()
         NotificationCenter.default.removeObserver(self)
+        MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
     }
 
     private func setupAudioSession() {
         do {
             let session = AVAudioSession.sharedInstance()
+            // Note: no .mixWithOthers — the app must own the audio session to
+            // appear as the system "Now Playing" app (lock screen / Control
+            // Center / Home Screen media controls). Mixing with others demotes
+            // us to an ambient source that the player UI ignores.
             try session.setCategory(.playAndRecord,
                                     mode: .default,
-                                    options: [.defaultToSpeaker, .allowBluetooth, .mixWithOthers])
+                                    options: [.defaultToSpeaker, .allowBluetooth])
             try session.setActive(true, options: [])
         } catch {
             print("AudioEngine session setup failed: \(error)")
@@ -196,6 +208,55 @@ final class AudioEngine: ObservableObject {
     func boostForSnoring(multiplier: Float) {
         guard isAutoMode, multiplier > 0 else { return }
         volume = min(1.0, volume + Double(multiplier))
+    }
+
+    // MARK: - Now Playing / Remote Controls
+
+    /// Wire lock screen / Control Center / headphone play-pause buttons to the
+    /// engine so the noise behaves like a music app the system can pause.
+    private func setupRemoteCommands() {
+        let center = MPRemoteCommandCenter.shared()
+
+        center.playCommand.isEnabled = true
+        center.playCommand.addTarget { [weak self] _ in
+            guard let self else { return .commandFailed }
+            self.play()
+            return .success
+        }
+
+        center.pauseCommand.isEnabled = true
+        center.pauseCommand.addTarget { [weak self] _ in
+            guard let self else { return .commandFailed }
+            self.pause()
+            return .success
+        }
+
+        center.togglePlayPauseCommand.isEnabled = true
+        center.togglePlayPauseCommand.addTarget { [weak self] _ in
+            guard let self else { return .commandFailed }
+            self.togglePlayPause()
+            return .success
+        }
+
+        // Endless noise has no track to skip; disable transport we can't honor.
+        center.nextTrackCommand.isEnabled = false
+        center.previousTrackCommand.isEnabled = false
+        center.changePlaybackPositionCommand.isEnabled = false
+    }
+
+    /// Publish the current noise as the system Now Playing item so it appears in
+    /// the lock screen / Control Center player with a working pause control.
+    private func updateNowPlayingInfo() {
+        var info: [String: Any] = [
+            MPMediaItemPropertyTitle: "\(noiseType.displayName) Noise",
+            MPMediaItemPropertyArtist: "SilentNight",
+            // Continuous noise — a live stream has no scrubber or duration.
+            MPNowPlayingInfoPropertyIsLiveStream: true,
+            MPNowPlayingInfoPropertyPlaybackRate: isPlaying ? 1.0 : 0.0
+        ]
+        info[MPNowPlayingInfoPropertyDefaultPlaybackRate] = 1.0
+        MPNowPlayingInfoCenter.default().nowPlayingInfo = info
+        MPNowPlayingInfoCenter.default().playbackState = isPlaying ? .playing : .paused
     }
 
     // MARK: - Noise Pipeline
