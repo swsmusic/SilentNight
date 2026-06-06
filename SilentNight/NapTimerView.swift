@@ -7,6 +7,7 @@ struct NapTimerView: View {
     @State private var selectedMinutes: Int = 30
     @State private var remainingSeconds: Int = 0
     @State private var isActive = false
+    @State private var isPaused = false
     @State private var timer: Timer?
 
     private let presetTimes = [10, 15, 20, 30, 45, 60, 90, 120]
@@ -29,7 +30,7 @@ struct NapTimerView: View {
             Spacer()
 
             if isActive {
-                cancelButton
+                activeControls
             } else {
                 startButton
             }
@@ -39,8 +40,9 @@ struct NapTimerView: View {
         .padding(.horizontal, 24)
         .onDisappear { cancelTimer() }
         .onChange(of: audioEngine.isPlaying) { _, newValue in
-            if !newValue && isActive {
-                // Audio stopped externally, cancel timer
+            if !newValue && isActive && !isPaused {
+                // Audio stopped externally, cancel timer. Pausing the nap timer
+                // intentionally pauses audio without discarding remaining time.
                 cancelTimer()
             }
         }
@@ -115,19 +117,21 @@ struct NapTimerView: View {
                     .shadow(color: Theme.accent.opacity(0.5), radius: 8)
                     .animation(.linear(duration: 1), value: progress)
 
-                VStack {
+                VStack(spacing: 6) {
                     Text(formattedTime)
                         .font(.system(size: 48, weight: .bold, design: .rounded))
                         .foregroundColor(Theme.textPrimary)
-                    Text("remaining")
-                        .font(.subheadline)
-                        .foregroundColor(Theme.textSecondary)
+                    Text(isPaused ? "paused" : "remaining")
+                        .font(.subheadline.weight(isPaused ? .semibold : .regular))
+                        .foregroundColor(isPaused ? Theme.accent : Theme.textSecondary)
                 }
             }
+            .opacity(isPaused ? 0.82 : 1.0)
 
-            Text("Noise will stop when timer ends")
+            Text(isPaused ? "Timer and noise are paused — resume when you’re ready" : "Noise will stop when timer ends")
                 .font(.caption)
                 .foregroundColor(Theme.textSecondary)
+                .multilineTextAlignment(.center)
         }
     }
 
@@ -164,17 +168,32 @@ struct NapTimerView: View {
         .padding(.horizontal)
     }
 
-    private var cancelButton: some View {
-        Button(action: cancelTimerAndStopAudio) {
-            Text("Cancel Timer")
-                .font(.headline)
-                .foregroundColor(Theme.accent)
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .stroke(Theme.accent, lineWidth: 2)
-                )
+    private var activeControls: some View {
+        VStack(spacing: 12) {
+            Button(action: isPaused ? resumeTimer : pauseTimer) {
+                Label(isPaused ? "Resume Timer" : "Pause Timer",
+                      systemImage: isPaused ? "play.fill" : "pause.fill")
+                    .font(.headline)
+                    .foregroundColor(.black)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(Theme.accentGradient)
+                    )
+            }
+
+            Button(action: cancelTimerAndStopAudio) {
+                Text("Cancel Timer")
+                    .font(.headline)
+                    .foregroundColor(Theme.accent)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .stroke(Theme.accent, lineWidth: 2)
+                    )
+            }
         }
         .padding(.horizontal)
     }
@@ -184,19 +203,47 @@ struct NapTimerView: View {
     private func startTimer() {
         remainingSeconds = selectedMinutes * 60
         isActive = true
+        isPaused = false
 
         // Start audio if not already playing
         if !audioEngine.isPlaying {
             audioEngine.play()
         }
 
+        scheduleCountdownTimer()
+    }
+
+    private func scheduleCountdownTimer() {
+        timer?.invalidate()
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
+            guard !isPaused else { return }
             if remainingSeconds > 0 {
                 remainingSeconds -= 1
             } else {
                 onTimerEnd()
             }
         }
+    }
+
+    private func pauseTimer() {
+        guard isActive, !isPaused else { return }
+        isPaused = true
+        timer?.invalidate()
+        timer = nil
+        audioEngine.pause()
+
+        let impact = UIImpactFeedbackGenerator(style: .soft)
+        impact.impactOccurred()
+    }
+
+    private func resumeTimer() {
+        guard isActive, isPaused, remainingSeconds > 0 else { return }
+        isPaused = false
+        audioEngine.play()
+        scheduleCountdownTimer()
+
+        let impact = UIImpactFeedbackGenerator(style: .soft)
+        impact.impactOccurred()
     }
 
     private func onTimerEnd() {
@@ -214,6 +261,7 @@ struct NapTimerView: View {
         timer?.invalidate()
         timer = nil
         isActive = false
+        isPaused = false
         remainingSeconds = 0
     }
 
