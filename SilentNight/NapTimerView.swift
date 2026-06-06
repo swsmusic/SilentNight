@@ -8,7 +8,9 @@ struct NapTimerView: View {
     @StateObject private var alarmPlayer = NapAlarmPlayer()
 
     @State private var selectedMinutes: Int = 30
+    @State private var extendMinutes: Int = 10
     @State private var remainingSeconds: Int = 0
+    @State private var totalTimerSeconds: Int = 0
     @State private var isActive = false
     @State private var isPaused = false
     @State private var isAlarmRinging = false
@@ -16,6 +18,7 @@ struct NapTimerView: View {
     @State private var delayedNoiseStart: DispatchWorkItem?
 
     private let presetTimes = [10, 15, 20, 30, 45, 60, 90, 120]
+    private let quickExtendMinutes = 10
     private let napStartChimeEnabled = true
 
     var body: some View {
@@ -146,6 +149,11 @@ struct NapTimerView: View {
                 .font(.caption)
                 .foregroundColor(Theme.textSecondary)
                 .multilineTextAlignment(.center)
+
+            Text(timerEndSummary)
+                .font(.caption2.weight(.medium))
+                .foregroundColor(Theme.accent.opacity(0.9))
+                .multilineTextAlignment(.center)
         }
     }
 
@@ -184,9 +192,20 @@ struct NapTimerView: View {
     }
 
     private var progress: Double {
-        let total = selectedMinutes * 60
-        guard total > 0 else { return 0 }
-        return Double(total - remainingSeconds) / Double(total)
+        guard totalTimerSeconds > 0 else { return 0 }
+        let elapsed = max(0, totalTimerSeconds - remainingSeconds)
+        return min(1, max(0, Double(elapsed) / Double(totalTimerSeconds)))
+    }
+
+    private var timerEndSummary: String {
+        if isPaused {
+            return "End time will shift when you resume"
+        }
+
+        let formatter = DateFormatter()
+        formatter.timeStyle = .short
+        let endDate = Date().addingTimeInterval(TimeInterval(max(0, remainingSeconds)))
+        return "Ends around \(formatter.string(from: endDate))"
     }
 
     private var formattedTime: String {
@@ -218,6 +237,8 @@ struct NapTimerView: View {
 
     private var activeControls: some View {
         VStack(spacing: 12) {
+            extendTimerControls(context: .active)
+
             Button(action: isPaused ? resumeTimer : pauseTimer) {
                 Label(isPaused ? "Resume Timer" : "Pause Timer",
                       systemImage: isPaused ? "play.fill" : "pause.fill")
@@ -246,17 +267,77 @@ struct NapTimerView: View {
         .padding(.horizontal)
     }
 
-    private var dismissAlarmButton: some View {
-        Button(action: dismissAlarm) {
-            Label("Dismiss Alarm", systemImage: "checkmark.circle.fill")
-                .font(.headline)
-                .foregroundColor(.black)
-                .frame(maxWidth: .infinity)
-                .padding()
+    private enum ExtendContext {
+        case active
+        case alarm
+    }
+
+    @ViewBuilder
+    private func extendTimerControls(context: ExtendContext) -> some View {
+        VStack(spacing: 10) {
+            HStack(spacing: 10) {
+                Button(action: { extendNap(by: quickExtendMinutes) }) {
+                    Label(context == .alarm ? "Snooze +\(quickExtendMinutes)" : "+\(quickExtendMinutes) min",
+                          systemImage: context == .alarm ? "zzz" : "plus.circle.fill")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundColor(Theme.textPrimary)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .fill(.ultraThinMaterial)
+                                .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                    .stroke(Theme.accent.opacity(0.45), lineWidth: 1))
+                        )
+                }
+
+                HStack(spacing: 6) {
+                    Text("\(extendMinutes)m")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundColor(Theme.accent)
+                    Stepper("", value: $extendMinutes, in: 5...60, step: 5)
+                        .labelsHidden()
+                }
+                .frame(width: 132)
+                .padding(.vertical, 7)
+                .padding(.horizontal, 8)
                 .background(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(Theme.accentGradient)
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(.ultraThinMaterial)
+                        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .stroke(Theme.cardStroke, lineWidth: 1))
                 )
+            }
+
+            Button(action: { extendNap(by: extendMinutes) }) {
+                Text(context == .alarm ? "Snooze \(extendMinutes) minutes" : "Add \(extendMinutes) minutes")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundColor(Theme.accent)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .stroke(Theme.accent.opacity(0.75), lineWidth: 1.5)
+                    )
+            }
+        }
+    }
+
+    private var dismissAlarmButton: some View {
+        VStack(spacing: 12) {
+            extendTimerControls(context: .alarm)
+
+            Button(action: dismissAlarm) {
+                Label("Dismiss Alarm", systemImage: "checkmark.circle.fill")
+                    .font(.headline)
+                    .foregroundColor(.black)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(Theme.accentGradient)
+                    )
+            }
         }
         .padding(.horizontal)
     }
@@ -265,6 +346,7 @@ struct NapTimerView: View {
 
     private func startTimer() {
         remainingSeconds = selectedMinutes * 60
+        totalTimerSeconds = remainingSeconds
         isActive = true
         isPaused = false
         playStartChimeAndBeginNoiseIfNeeded()
@@ -326,6 +408,30 @@ struct NapTimerView: View {
         impact.impactOccurred()
     }
 
+    private func extendNap(by minutes: Int) {
+        let secondsToAdd = max(1, minutes) * 60
+
+        if isAlarmRinging || alarmPlayer.isRinging {
+            dismissAlarm()
+            remainingSeconds = secondsToAdd
+            totalTimerSeconds = secondsToAdd
+            isActive = true
+            isPaused = false
+            audioEngine.play()
+            scheduleCountdownTimer()
+        } else {
+            guard isActive else { return }
+            remainingSeconds += secondsToAdd
+            totalTimerSeconds += secondsToAdd
+            if !isPaused && timer == nil {
+                scheduleCountdownTimer()
+            }
+        }
+
+        let impact = UIImpactFeedbackGenerator(style: .soft)
+        impact.impactOccurred()
+    }
+
     private func onTimerEnd() {
         timer?.invalidate()
         timer = nil
@@ -356,6 +462,7 @@ struct NapTimerView: View {
         isActive = false
         isPaused = false
         remainingSeconds = 0
+        totalTimerSeconds = 0
     }
 
     /// User explicitly tapped Cancel — kill timer AND stop the noise it started.
