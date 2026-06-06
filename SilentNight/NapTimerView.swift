@@ -4,6 +4,7 @@ import AVFoundation
 /// Nap timer view for scheduling automatic stop
 struct NapTimerView: View {
     @EnvironmentObject var audioEngine: AudioEngine
+    @StateObject private var startChimePlayer = NapStartChimePlayer()
     @StateObject private var alarmPlayer = NapAlarmPlayer()
 
     @State private var selectedMinutes: Int = 30
@@ -12,8 +13,10 @@ struct NapTimerView: View {
     @State private var isPaused = false
     @State private var isAlarmRinging = false
     @State private var timer: Timer?
+    @State private var delayedNoiseStart: DispatchWorkItem?
 
     private let presetTimes = [10, 15, 20, 30, 45, 60, 90, 120]
+    private let napStartChimeEnabled = true
 
     var body: some View {
         VStack(spacing: 32) {
@@ -48,6 +51,7 @@ struct NapTimerView: View {
         .onDisappear {
             cancelTimer()
             dismissAlarm()
+            startChimePlayer.stop()
         }
         .onChange(of: audioEngine.isPlaying) { _, newValue in
             if !newValue && isActive && !isPaused {
@@ -263,13 +267,30 @@ struct NapTimerView: View {
         remainingSeconds = selectedMinutes * 60
         isActive = true
         isPaused = false
-
-        // Start audio if not already playing
-        if !audioEngine.isPlaying {
-            audioEngine.play()
-        }
+        playStartChimeAndBeginNoiseIfNeeded()
 
         scheduleCountdownTimer()
+    }
+
+    private func playStartChimeAndBeginNoiseIfNeeded() {
+        delayedNoiseStart?.cancel()
+        delayedNoiseStart = nil
+
+        guard napStartChimeEnabled else {
+            if !audioEngine.isPlaying { audioEngine.play() }
+            return
+        }
+
+        startChimePlayer.start()
+
+        guard !audioEngine.isPlaying else { return }
+        let workItem = DispatchWorkItem { [audioEngine] in
+            audioEngine.play()
+        }
+        delayedNoiseStart = workItem
+        // Let the soft “rock-a-bye baby” pickup be audible before the sleep-noise
+        // fade rises underneath it.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.45, execute: workItem)
     }
 
     private func scheduleCountdownTimer() {
@@ -329,6 +350,9 @@ struct NapTimerView: View {
     private func cancelTimer() {
         timer?.invalidate()
         timer = nil
+        delayedNoiseStart?.cancel()
+        delayedNoiseStart = nil
+        startChimePlayer.stop()
         isActive = false
         isPaused = false
         remainingSeconds = 0
@@ -345,6 +369,116 @@ struct NapTimerView: View {
         isAlarmRinging = false
         alarmPlayer.stop()
         UINotificationFeedbackGenerator().notificationOccurred(.success)
+    }
+}
+
+/// Gentle synthesized startup chime for the nap timer. Kept as its own small
+/// player so the melody can be swapped or disabled without touching timer logic.
+final class NapStartChimePlayer: ObservableObject {
+    @Published private(set) var isPlaying = false
+
+    private var engine: AVAudioEngine?
+    private var player: AVAudioPlayerNode?
+    private var buffer: AVAudioPCMBuffer?
+
+    func start() {
+        stop()
+        buildPipelineIfNeeded()
+        guard let engine, let player, let buffer else { return }
+
+        do {
+            let session = AVAudioSession.sharedInstance()
+            try session.setCategory(.playAndRecord,
+                                    mode: .default,
+                                    options: [.defaultToSpeaker, .allowBluetooth, .mixWithOthers])
+            try session.setActive(true, options: [])
+
+            if !engine.isRunning { try engine.start() }
+            player.scheduleBuffer(buffer, at: nil, options: []) { [weak self] in
+                DispatchQueue.main.async {
+                    self?.isPlaying = false
+                }
+            }
+            player.volume = 0.38
+            player.play()
+            isPlaying = true
+        } catch {
+            print("NapStartChimePlayer failed to start: \(error)")
+            isPlaying = false
+        }
+    }
+
+    func stop() {
+        player?.stop()
+        engine?.stop()
+        isPlaying = false
+    }
+
+    private func buildPipelineIfNeeded() {
+        guard engine == nil else { return }
+
+        let engine = AVAudioEngine()
+        let player = AVAudioPlayerNode()
+        let format = AVAudioFormat(standardFormatWithSampleRate: 44_100, channels: 1)!
+        let buffer = makeRockAByeBuffer(format: format)
+
+        engine.attach(player)
+        engine.connect(player, to: engine.mainMixerNode, format: format)
+
+        self.engine = engine
+        self.player = player
+        self.buffer = buffer
+    }
+
+    private func makeRockAByeBuffer(format: AVAudioFormat) -> AVAudioPCMBuffer {
+        struct Note {
+            let start: TimeInterval
+            let duration: TimeInterval
+            let frequency: Double
+        }
+
+        // A short lullaby contour: “rock-a-bye ba-by” pickup, then a gentle fall.
+        // Frequencies are kept explicit so swapping the melody later is trivial.
+        let notes = [
+            Note(start: 0.00, duration: 0.18, frequency: 523.25), // C5
+            Note(start: 0.22, duration: 0.18, frequency: 659.25), // E5
+            Note(start: 0.44, duration: 0.32, frequency: 783.99), // G5
+            Note(start: 0.82, duration: 0.18, frequency: 659.25), // E5
+            Note(start: 1.04, duration: 0.18, frequency: 523.25), // C5
+            Note(start: 1.26, duration: 0.30, frequency: 659.25), // E5
+            Note(start: 1.62, duration: 0.22, frequency: 880.00), // A5
+            Note(start: 1.88, duration: 0.22, frequency: 783.99), // G5
+            Note(start: 2.14, duration: 0.38, frequency: 698.46), // F5
+            Note(start: 2.58, duration: 0.44, frequency: 523.25)  // C5
+        ]
+
+        let sampleRate = format.sampleRate
+        let duration = (notes.map { $0.start + $0.duration }.max() ?? 0) + 0.18
+        let frameCount = AVAudioFrameCount(sampleRate * duration)
+        let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount)!
+        buffer.frameLength = frameCount
+
+        guard let channel = buffer.floatChannelData?[0] else { return buffer }
+
+        for frame in 0..<Int(frameCount) {
+            let time = Double(frame) / sampleRate
+            var sample: Double = 0
+
+            for note in notes where time >= note.start && time < note.start + note.duration {
+                let local = time - note.start
+                let release = note.duration - local
+                let attack = min(1.0, local / 0.035)
+                let decay = min(1.0, max(0.0, release / 0.075))
+                let envelope = attack * decay
+                let fundamental = sin(2.0 * Double.pi * note.frequency * time)
+                let softBell = 0.72 * fundamental + 0.18 * sin(2.0 * Double.pi * note.frequency * 2.0 * time)
+                sample += softBell * envelope
+            }
+
+            channel[frame] = Float(sample * 0.20)
+        }
+
+        return buffer
     }
 }
 
