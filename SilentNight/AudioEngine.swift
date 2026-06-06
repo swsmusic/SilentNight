@@ -10,10 +10,17 @@ final class AudioEngine: ObservableObject {
     private var audioPlayer: AVAudioPlayerNode?
     private var audioEngine: AVAudioEngine?
     private var currentBuffer: AVAudioPCMBuffer?
+    private var fadeTimer: Timer?
+    private var targetPlayerVolume: Float = 0.5
+    private let fadeDuration: TimeInterval = 1.2
+    private let fadeStepInterval: TimeInterval = 0.05
 
     @Published var isPlaying = false
     @Published var volume: Double = 0.5 {
-        didSet { adjustVolume() }
+        didSet {
+            targetPlayerVolume = Float(volume)
+            adjustVolume()
+        }
     }
     @Published var noiseType: NoiseType = .brown
     @Published var isAutoMode = false
@@ -42,6 +49,7 @@ final class AudioEngine: ObservableObject {
     }
 
     deinit {
+        fadeTimer?.invalidate()
         NotificationCenter.default.removeObserver(self)
     }
 
@@ -125,6 +133,8 @@ final class AudioEngine: ObservableObject {
     // MARK: - Playback Control
 
     func play() {
+        fadeTimer?.invalidate()
+        fadeTimer = nil
         ensurePipelineReady()
         guard let engine = audioEngine, let player = audioPlayer else {
             print("AudioEngine: pipeline not ready")
@@ -136,9 +146,10 @@ final class AudioEngine: ObservableObject {
             // If the player was previously stopped (not just paused), its scheduled
             // buffer is consumed. Reschedule so .play() actually plays something.
             if !player.isPlaying { rescheduleBufferIfNeeded() }
+            player.volume = 0
             player.play()
-            adjustVolume()
             isPlaying = true
+            fadePlayerVolume(to: targetPlayerVolume, duration: fadeDuration)
         } catch {
             print("AudioEngine failed to start: \(error)")
             isPlaying = false
@@ -146,16 +157,33 @@ final class AudioEngine: ObservableObject {
     }
 
     func pause() {
-        audioPlayer?.pause()
+        guard isPlaying, let player = audioPlayer else {
+            audioPlayer?.pause()
+            isPlaying = false
+            return
+        }
         isPlaying = false
+        fadePlayerVolume(to: 0, duration: fadeDuration) { [weak player] in
+            player?.pause()
+        }
     }
 
     func stop() {
-        audioPlayer?.stop()
-        // Keep the engine alive but reset the player state. Next play() will
-        // reschedule the buffer and resume.
-        audioEngine?.pause()
+        guard isPlaying, let player = audioPlayer else {
+            audioPlayer?.stop()
+            // Keep the engine alive but reset the player state. Next play() will
+            // reschedule the buffer and resume.
+            audioEngine?.pause()
+            isPlaying = false
+            return
+        }
         isPlaying = false
+        fadePlayerVolume(to: 0, duration: fadeDuration) { [weak self, weak player] in
+            player?.stop()
+            // Keep the engine alive but reset the player state. Next play() will
+            // reschedule the buffer and resume.
+            self?.audioEngine?.pause()
+        }
     }
 
     func togglePlayPause() {
@@ -201,6 +229,8 @@ final class AudioEngine: ObservableObject {
     }
 
     private func tearDownPipeline() {
+        fadeTimer?.invalidate()
+        fadeTimer = nil
         audioPlayer?.stop()
         audioEngine?.stop()
         audioEngine = nil
@@ -209,7 +239,45 @@ final class AudioEngine: ObservableObject {
     }
 
     private func adjustVolume() {
-        audioPlayer?.volume = Float(volume)
+        guard fadeTimer == nil else { return }
+        audioPlayer?.volume = targetPlayerVolume
+    }
+
+    private func fadePlayerVolume(to destination: Float,
+                                  duration: TimeInterval,
+                                  completion: (() -> Void)? = nil) {
+        fadeTimer?.invalidate()
+
+        guard let player = audioPlayer else {
+            completion?()
+            return
+        }
+
+        let start = player.volume
+        let steps = max(1, Int(duration / fadeStepInterval))
+        var currentStep = 0
+
+        fadeTimer = Timer.scheduledTimer(withTimeInterval: fadeStepInterval, repeats: true) { [weak self] timer in
+            guard let self else {
+                timer.invalidate()
+                return
+            }
+
+            currentStep += 1
+            let progress = min(1, Float(currentStep) / Float(steps))
+            player.volume = start + ((destination - start) * progress)
+
+            if currentStep >= steps {
+                timer.invalidate()
+                self.fadeTimer = nil
+                player.volume = destination
+                completion?()
+            }
+        }
+
+        if let fadeTimer {
+            RunLoop.main.add(fadeTimer, forMode: .common)
+        }
     }
 
     // MARK: - Noise Generation
