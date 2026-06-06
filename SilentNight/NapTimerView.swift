@@ -1,13 +1,16 @@
 import SwiftUI
+import AVFoundation
 
 /// Nap timer view for scheduling automatic stop
 struct NapTimerView: View {
     @EnvironmentObject var audioEngine: AudioEngine
+    @StateObject private var alarmPlayer = NapAlarmPlayer()
 
     @State private var selectedMinutes: Int = 30
     @State private var remainingSeconds: Int = 0
     @State private var isActive = false
     @State private var isPaused = false
+    @State private var isAlarmRinging = false
     @State private var timer: Timer?
 
     private let presetTimes = [10, 15, 20, 30, 45, 60, 90, 120]
@@ -21,7 +24,9 @@ struct NapTimerView: View {
 
             Spacer()
 
-            if isActive {
+            if isAlarmRinging {
+                alarmDisplay
+            } else if isActive {
                 timerDisplay
             } else {
                 durationPicker
@@ -29,7 +34,9 @@ struct NapTimerView: View {
 
             Spacer()
 
-            if isActive {
+            if isAlarmRinging {
+                dismissAlarmButton
+            } else if isActive {
                 activeControls
             } else {
                 startButton
@@ -38,7 +45,10 @@ struct NapTimerView: View {
             Spacer()
         }
         .padding(.horizontal, 24)
-        .onDisappear { cancelTimer() }
+        .onDisappear {
+            cancelTimer()
+            dismissAlarm()
+        }
         .onChange(of: audioEngine.isPlaying) { _, newValue in
             if !newValue && isActive && !isPaused {
                 // Audio stopped externally, cancel timer. Pausing the nap timer
@@ -135,6 +145,40 @@ struct NapTimerView: View {
         }
     }
 
+    private var alarmDisplay: some View {
+        VStack(spacing: 20) {
+            ZStack {
+                Circle()
+                    .fill(Theme.accent.opacity(0.16))
+                    .frame(width: 200, height: 200)
+                    .blur(radius: 8)
+
+                Circle()
+                    .fill(.ultraThinMaterial)
+                    .overlay(Circle().stroke(Theme.accent.opacity(0.55), lineWidth: 2))
+                    .frame(width: 172, height: 172)
+
+                VStack(spacing: 12) {
+                    Image(systemName: "alarm.fill")
+                        .font(.system(size: 44, weight: .bold))
+                        .foregroundStyle(Theme.accentGradient)
+                    Text("Timer done")
+                        .font(.title2.bold())
+                        .foregroundColor(Theme.textPrimary)
+                    Text("Alarm is ringing")
+                        .font(.subheadline)
+                        .foregroundColor(Theme.textSecondary)
+                }
+            }
+            .symbolEffect(.pulse, value: isAlarmRinging)
+
+            Text("Sleep noise faded out first. Tap dismiss when you’re awake.")
+                .font(.caption)
+                .foregroundColor(Theme.textSecondary)
+                .multilineTextAlignment(.center)
+        }
+    }
+
     private var progress: Double {
         let total = selectedMinutes * 60
         guard total > 0 else { return 0 }
@@ -198,6 +242,21 @@ struct NapTimerView: View {
         .padding(.horizontal)
     }
 
+    private var dismissAlarmButton: some View {
+        Button(action: dismissAlarm) {
+            Label("Dismiss Alarm", systemImage: "checkmark.circle.fill")
+                .font(.headline)
+                .foregroundColor(.black)
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(Theme.accentGradient)
+                )
+        }
+        .padding(.horizontal)
+    }
+
     // MARK: - Timer Logic
 
     private func startTimer() {
@@ -247,12 +306,22 @@ struct NapTimerView: View {
     }
 
     private func onTimerEnd() {
-        cancelTimer()
+        timer?.invalidate()
+        timer = nil
+        isActive = false
+        isPaused = false
+        remainingSeconds = 0
+        isAlarmRinging = true
         audioEngine.stop()
 
-        // Haptic feedback
-        let impact = UIImpactFeedbackGenerator(style: .medium)
-        impact.impactOccurred()
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
+
+        // Let the sleep noise fade out before the alarm starts so the end state is
+        // clear and not a harsh overlap of two sounds.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.25) {
+            guard isAlarmRinging else { return }
+            alarmPlayer.start()
+        }
     }
 
     /// Invalidates the timer state only — used by onDisappear so navigating
@@ -269,6 +338,113 @@ struct NapTimerView: View {
     private func cancelTimerAndStopAudio() {
         cancelTimer()
         audioEngine.stop()
+    }
+
+    private func dismissAlarm() {
+        guard isAlarmRinging || alarmPlayer.isRinging else { return }
+        isAlarmRinging = false
+        alarmPlayer.stop()
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
+    }
+}
+
+/// Small synthesized alarm used by the nap timer. It avoids bundled assets while
+/// giving the user a real, repeatable, dismissible sound that respects the
+/// current iOS audio session/output volume.
+final class NapAlarmPlayer: ObservableObject {
+    @Published private(set) var isRinging = false
+
+    private var engine: AVAudioEngine?
+    private var player: AVAudioPlayerNode?
+    private var buffer: AVAudioPCMBuffer?
+
+    func start() {
+        stop()
+        buildPipelineIfNeeded()
+        guard let engine, let player, let buffer else { return }
+
+        do {
+            let session = AVAudioSession.sharedInstance()
+            try session.setCategory(.playAndRecord,
+                                    mode: .default,
+                                    options: [.defaultToSpeaker, .allowBluetooth, .mixWithOthers])
+            try session.setActive(true, options: [])
+
+            if !engine.isRunning { try engine.start() }
+            player.scheduleBuffer(buffer, at: nil, options: .loops, completionHandler: nil)
+            player.volume = 0.72
+            player.play()
+            isRinging = true
+        } catch {
+            print("NapAlarmPlayer failed to start: \(error)")
+            isRinging = false
+        }
+    }
+
+    func stop() {
+        player?.stop()
+        engine?.stop()
+        isRinging = false
+    }
+
+    private func buildPipelineIfNeeded() {
+        guard engine == nil else { return }
+
+        let engine = AVAudioEngine()
+        let player = AVAudioPlayerNode()
+        let format = AVAudioFormat(standardFormatWithSampleRate: 44_100, channels: 1)!
+        let buffer = makeAlarmBuffer(format: format)
+
+        engine.attach(player)
+        engine.connect(player, to: engine.mainMixerNode, format: format)
+
+        self.engine = engine
+        self.player = player
+        self.buffer = buffer
+    }
+
+    private func makeAlarmBuffer(format: AVAudioFormat) -> AVAudioPCMBuffer {
+        let sampleRate = format.sampleRate
+        let duration: TimeInterval = 1.6
+        let frameCount = AVAudioFrameCount(sampleRate * duration)
+        let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount)!
+        buffer.frameLength = frameCount
+
+        guard let channel = buffer.floatChannelData?[0] else { return buffer }
+
+        for frame in 0..<Int(frameCount) {
+            let time = Double(frame) / sampleRate
+            let cyclePosition = time.truncatingRemainder(dividingBy: duration)
+            let frequency: Double
+            let amplitude: Float
+
+            switch cyclePosition {
+            case 0.00..<0.28:
+                frequency = 784   // G5
+                amplitude = 0.34
+            case 0.36..<0.64:
+                frequency = 988   // B5
+                amplitude = 0.30
+            case 0.78..<1.06:
+                frequency = 880   // A5
+                amplitude = 0.26
+            default:
+                frequency = 0
+                amplitude = 0
+            }
+
+            guard frequency > 0 else {
+                channel[frame] = 0
+                continue
+            }
+
+            let localToneTime = cyclePosition.truncatingRemainder(dividingBy: 0.36)
+            let envelope = min(1.0, localToneTime / 0.025) * min(1.0, max(0.0, (0.30 - localToneTime) / 0.04))
+            let sine = sin(2.0 * Double.pi * frequency * time)
+            channel[frame] = Float(sine) * amplitude * Float(envelope)
+        }
+
+        return buffer
     }
 }
 
