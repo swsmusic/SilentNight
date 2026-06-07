@@ -18,16 +18,10 @@ struct NapTimerView: View {
     @State private var delayedNoiseStart: DispatchWorkItem?
 
     private let presetTimes = [10, 15, 20, 30, 45, 60, 90, 120]
-    private let quickExtendMinutes = 10
     private let napStartChimeEnabled = true
 
     var body: some View {
-        VStack(spacing: 32) {
-            Text("Nap Timer")
-                .font(.title2.bold())
-                .foregroundStyle(Theme.accentGradient)
-                .padding(.top, 24)
-
+        VStack(spacing: 20) {
             Spacer()
 
             if isAlarmRinging {
@@ -236,7 +230,7 @@ struct NapTimerView: View {
     }
 
     private var activeControls: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 10) {
             extendTimerControls(context: .active)
 
             Button(action: isPaused ? resumeTimer : pauseTimer) {
@@ -265,6 +259,7 @@ struct NapTimerView: View {
             }
         }
         .padding(.horizontal)
+        .padding(.bottom, 54)
     }
 
     private enum ExtendContext {
@@ -274,50 +269,48 @@ struct NapTimerView: View {
 
     @ViewBuilder
     private func extendTimerControls(context: ExtendContext) -> some View {
-        VStack(spacing: 10) {
-            HStack(spacing: 10) {
-                Button(action: { extendNap(by: quickExtendMinutes) }) {
-                    Label(context == .alarm ? "Snooze +\(quickExtendMinutes)" : "+\(quickExtendMinutes) min",
-                          systemImage: context == .alarm ? "zzz" : "plus.circle.fill")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundColor(Theme.textPrimary)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
-                        .background(
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .fill(.ultraThinMaterial)
-                                .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .stroke(Theme.accent.opacity(0.45), lineWidth: 1))
-                        )
+        HStack(spacing: 10) {
+            HStack(spacing: 12) {
+                Button(action: { extendMinutes = max(5, extendMinutes - 5) }) {
+                    Image(systemName: "minus")
+                        .font(.subheadline.weight(.bold))
+                        .frame(width: 30, height: 30)
                 }
 
-                HStack(spacing: 6) {
-                    Text("\(extendMinutes)m")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundColor(Theme.accent)
-                    Stepper("", value: $extendMinutes, in: 5...60, step: 5)
-                        .labelsHidden()
-                }
-                .frame(width: 132)
-                .padding(.vertical, 7)
-                .padding(.horizontal, 8)
-                .background(
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .fill(.ultraThinMaterial)
-                        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .stroke(Theme.cardStroke, lineWidth: 1))
-                )
-            }
-
-            Button(action: { extendNap(by: extendMinutes) }) {
-                Text(context == .alarm ? "Snooze \(extendMinutes) minutes" : "Add \(extendMinutes) minutes")
+                Text("\(extendMinutes)m")
                     .font(.subheadline.weight(.semibold))
                     .foregroundColor(Theme.accent)
+                    .monospacedDigit()
+                    .frame(minWidth: 36)
+
+                Button(action: { extendMinutes = min(60, extendMinutes + 5) }) {
+                    Image(systemName: "plus")
+                        .font(.subheadline.weight(.bold))
+                        .frame(width: 30, height: 30)
+                }
+            }
+            .foregroundColor(Theme.textPrimary)
+            .padding(.vertical, 8)
+            .padding(.horizontal, 10)
+            .background(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(.ultraThinMaterial)
+                    .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .stroke(Theme.cardStroke, lineWidth: 1))
+            )
+
+            Button(action: { extendNap(by: extendMinutes) }) {
+                Label(context == .alarm ? "Snooze" : "Add time",
+                      systemImage: context == .alarm ? "zzz" : "plus.circle.fill")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundColor(Theme.textPrimary)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 12)
                     .background(
                         RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .stroke(Theme.accent.opacity(0.75), lineWidth: 1.5)
+                            .fill(.ultraThinMaterial)
+                            .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .stroke(Theme.accent.opacity(0.45), lineWidth: 1))
                     )
             }
         }
@@ -370,9 +363,9 @@ struct NapTimerView: View {
             audioEngine.play()
         }
         delayedNoiseStart = workItem
-        // Let the soft “rock-a-bye baby” pickup be audible before the sleep-noise
+        // Let the five-note “rock-a-bye baby” pickup finish before the sleep-noise
         // fade rises underneath it.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.45, execute: workItem)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.25, execute: workItem)
     }
 
     private func scheduleCountdownTimer() {
@@ -544,19 +537,14 @@ final class NapStartChimePlayer: ObservableObject {
             let frequency: Double
         }
 
-        // A short lullaby contour: “rock-a-bye ba-by” pickup, then a gentle fall.
-        // Frequencies are kept explicit so swapping the melody later is trivial.
+        // Five chimes only — one for each syllable in “rock-a-bye ba-by”.
+        // Frequencies are kept explicit so swapping the phrase later is trivial.
         let notes = [
-            Note(start: 0.00, duration: 0.18, frequency: 523.25), // C5
-            Note(start: 0.22, duration: 0.18, frequency: 659.25), // E5
-            Note(start: 0.44, duration: 0.32, frequency: 783.99), // G5
-            Note(start: 0.82, duration: 0.18, frequency: 659.25), // E5
-            Note(start: 1.04, duration: 0.18, frequency: 523.25), // C5
-            Note(start: 1.26, duration: 0.30, frequency: 659.25), // E5
-            Note(start: 1.62, duration: 0.22, frequency: 880.00), // A5
-            Note(start: 1.88, duration: 0.22, frequency: 783.99), // G5
-            Note(start: 2.14, duration: 0.38, frequency: 698.46), // F5
-            Note(start: 2.58, duration: 0.44, frequency: 523.25)  // C5
+            Note(start: 0.00, duration: 0.20, frequency: 392.00), // G4 — Rock
+            Note(start: 0.22, duration: 0.18, frequency: 392.00), // G4 — a
+            Note(start: 0.42, duration: 0.24, frequency: 493.88), // B4 — bye
+            Note(start: 0.70, duration: 0.22, frequency: 440.00), // A4 — ba
+            Note(start: 0.96, duration: 0.34, frequency: 392.00)  // G4 — by
         ]
 
         let sampleRate = format.sampleRate
